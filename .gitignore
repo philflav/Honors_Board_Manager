@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Project specific
+.env
+automated_images/
+honors_boards_cache.json
+golf_results_*.json
+scorecards_*.json
+scorecards_*.csv
+team_scores_*.csv

@@ -4,7 +4,7 @@ import os
 
 # 1. Setup
 font_path = "C:/Windows/Fonts/times.ttf"
-background_template = Image.open("./Board_backround_images/background_2.png")
+background_template = Image.open("./Board_background_images/background_2.png")
 json_data = "honors_boards_cache.json" # Your attached file
 
 # Define colors and positions
@@ -56,7 +56,7 @@ def draw_embossed_text(draw, position, text, font, base_color):
     # Draw the main gold text on top
     draw.text((x, y), text, font=font, fill=base_color)
 
-def automate_boards():
+def automate_boards(limit_ids=None):
     # Create the directory if it doesn't already exist
     if not os.path.exists("automated_images"):
         os.makedirs("automated_images")
@@ -66,6 +66,11 @@ def automate_boards():
 
     for board in data:
         current_board_id = board["board_id"]
+        
+        # If limit_ids is provided, skip boards not in the list
+        if limit_ids and current_board_id not in limit_ids:
+            continue
+            
         # Make a copy of the background template
         final_image = background_template.copy()
         draw = ImageDraw.Draw(final_image)
@@ -103,5 +108,10 @@ def automate_boards():
 
         # Save unique board image
         final_image.save(f"automated_images/board_{current_board_id}.png")
+        print(f"Generated image for board {current_board_id}")
 
-automate_boards()
+if __name__ == "__main__":
+    import sys
+    # Extract IDs from command line if provided
+    ids = [int(arg) for arg in sys.argv[1:] if arg.isdigit()]
+    automate_boards(limit_ids=ids if ids else None)
