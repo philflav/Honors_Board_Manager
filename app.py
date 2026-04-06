@@ -349,7 +349,7 @@ with col_help:
     4.  **Renaming**: In the table below, you can click on any **Title** to change it (e.g. shorten it for the board).
     5.  **Pick Boards**: Click the checkboxes to select which boards to create as images.
     6.  **Create images**: Click **Generate Selected Display Boards**.
-    7.  **ZIP & Exit**: Download your images in the popup, then click **Exit & Cleanup** in the sidebar.
+    7.  **ZIP & Exit**: Download your images to a **local folder** when prompted, then click **Exit & Cleanup** in the sidebar.
     """, icon="💡")
 
 st.markdown("---")
