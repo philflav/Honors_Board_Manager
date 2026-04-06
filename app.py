@@ -6,6 +6,7 @@ import pandas as pd
 import io
 import zipfile
 import shutil
+import sys
 from datetime import datetime
 
 # Configuration
@@ -55,6 +56,24 @@ def get_images_zip():
                 zf.write(file_path, filename)
     buf.seek(0)
     return buf
+
+@st.cache_resource
+def install_playwright_binaries():
+    """Ensures Playwright browser binaries are installed on Streamlit Cloud."""
+    try:
+        # Check if we are running in a cloud-like environment (check for /mount/src or similar)
+        # Or just run it once to be safe - it's fast if already installed
+        st.info("🌐 Checking for browser binaries...")
+        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+        # Note: --with-deps usually needs sudo, but Streamlit Cloud environment 
+        # often requires certain packages in packages.txt if it fails here.
+    except Exception as e:
+        st.error(f"Error ensuring browser binaries: {e}")
+        return False
+    return True
+
+# Trigger binary install
+install_playwright_binaries()
 
 def load_board_ids():
     """Loads the list of board IDs from the JSON file."""
@@ -132,7 +151,7 @@ def trigger_image_generation(ids):
     """Runs generate_boards.py for specific IDs."""
     try:
         with st.spinner(f"🎨 Generating {len(ids)} board images..."):
-            cmd = ["python", "generate_boards.py"] + [str(i) for i in ids]
+            cmd = [sys.executable, "generate_boards.py"] + [str(i) for i in ids]
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 st.success("✅ Image generation complete!")
@@ -311,7 +330,7 @@ with col_controls:
                 try:
                     with st.spinner(f"⏳ Extracting data from {len(current_ids)} boards... Please wait."):
                         process = subprocess.Popen(
-                            ["python", SCRAPER_SCRIPT],
+                            [sys.executable, SCRAPER_SCRIPT],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                             text=True,
