@@ -343,12 +343,13 @@ with col_help:
     st.info("""
     ### 📖 Quick User Guide
     
-    1.  **Check Details**: Ensure your **User ID** and **PIN** are correct.
-    2.  **Fetch Data**: Click **Run Honors Scraper** to get the latest winners.
-    3.  **Renaming**: In the table below, you can click on any **Title** to change it (e.g. shorten it for the board).
-    4.  **Pick Boards**: Click the checkboxes to select which boards to create.
-    5.  **Create images**: Click **Generate Selected Display Boards**.
-    6.  **ZIP & Exit**: Download your images in the popup, then click **Exit & Cleanup** in the sidebar.
+    1.  **Manage Boards**: Use the **sidebar on the left** to add or remove Board IDs you want to track.
+    2.  **Login Info**: Ensure your **User ID** and **PIN** are correct.
+    3.  **Fetch Data**: Click **Run Honors Scraper** to get the latest winners from the club site.
+    4.  **Renaming**: In the table below, you can click on any **Title** to change it (e.g. shorten it for the board).
+    5.  **Pick Boards**: Click the checkboxes to select which boards to create as images.
+    6.  **Create images**: Click **Generate Selected Display Boards**.
+    7.  **ZIP & Exit**: Download your images in the popup, then click **Exit & Cleanup** in the sidebar.
     """, icon="💡")
 
 st.markdown("---")
