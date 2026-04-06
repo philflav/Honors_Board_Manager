@@ -1,5 +1,5 @@
 streamlit
 pandas
 playwright
-Pillow
+pillow
 python-dotenv
