@@ -7,6 +7,7 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
+RUN apt-get update && apt-get install -y fonts-liberation && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install the Chromium browser binary
@@ -24,4 +25,5 @@ EXPOSE 8501
 # Command to run the Streamlit app
 # --server.address 0.0.0.0 is critical for Docker reachability
 # --server.port 8501 ensures it matches the EXPOSE and Render config
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# --server.enableCORS=false and --server.enableXsrfProtection=false resolve static asset loading issues on Render
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.enableCORS=false", "--server.enableXsrfProtection=false"]

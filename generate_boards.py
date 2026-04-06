@@ -2,8 +2,11 @@ import json
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-# 1. Setup
-font_path = "C:/Windows/Fonts/times.ttf"
+# 1. Setup - Cross-platform font path
+if os.name == 'nt': # Windows
+    font_path = "C:/Windows/Fonts/times.ttf"
+else: # Linux (Docker/Render)
+    font_path = "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"
 background_template = Image.open("./Board_background_images/background_2.png")
 json_data = "honors_boards_cache.json" # Your attached file
 
