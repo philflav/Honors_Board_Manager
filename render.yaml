@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: honors-board-manager
+    runtime: docker
+    plan: free # Use the free tier (will spin down after inactivity)
+    envVars:
+      - key: CLUB_URL
+        value: https://felixstowe.intelligentgolf.co.uk
+      - key: USERNAME
+        sync: false # Set this in Render Dashboard
+      - key: PIN
+        sync: false # Set this in Render Dashboard
+      - key: STREAMLIT_SERVER_PORT
+        value: "8501"
+      - key: STREAMLIT_SERVER_ADDRESS
+        value: "0.0.0.0"
