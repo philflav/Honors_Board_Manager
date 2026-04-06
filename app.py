@@ -282,59 +282,74 @@ if current_ids:
 else:
     st.sidebar.info("No boards configured.")
 
-# Main Control Panel (Vertical Stack)
-st.subheader("⚙️ Scraper Controls")
+# Main Control Panel
+col_controls, col_help = st.columns([1.6, 1], gap="medium")
 
-# Credentials section
-col_user, col_pin, _ = st.columns([1, 1, 2])
-with col_user:
-    username_input = st.text_input("User ID", value=os.getenv("USERNAME", ""), help="Your Intelligent Golf username")
-with col_pin:
-    pin_input = st.text_input("PIN", value=os.getenv("PIN", ""), type="password", help="Your Intelligent Golf PIN")
+with col_controls:
+    st.subheader("⚙️ Scraper Controls")
+    
+    # Credentials section
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        username_input = st.text_input("User ID", value=os.getenv("USERNAME", ""), help="Your Intelligent Golf username")
+    with c2:
+        pin_input = st.text_input("PIN", value=os.getenv("PIN", ""), type="password", help="Your Intelligent Golf PIN")
 
-st.write(f"Currently tracking **{len(current_ids)}** boards.")
+    st.write(f"Currently tracking **{len(current_ids)}** boards.")
 
-if st.button("🔥 Run Honors Scraper", type="primary"):
-    if not username_input or not pin_input:
-        st.error("Please provide both User ID and PIN.")
-    else:
-        # Pass credentials via environment variables for the subprocess
-        env = os.environ.copy()
-        env["USERNAME"] = username_input
-        env["PIN"] = pin_input
-        
-        # We need to wrap run_scraper to accept env
-        def run_scraper_with_env(env_vars):
-            try:
-                with st.spinner(f"⏳ Extracting data from {len(current_ids)} boards... Please wait."):
-                    process = subprocess.Popen(
-                        ["python", SCRAPER_SCRIPT],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        bufsize=1,
-                        env=env_vars
-                    )
-                    
-                    # Consume the output so the process doesn't block, but don't display it
-                    stdout, stderr = process.communicate()
-                    
-                    if process.returncode != 0:
-                        with st.expander("⚠️ View Error Logs"):
-                            st.code(stdout)
-                            if stderr:
-                                st.code(stderr)
-                        return False
-                    return True
-            except Exception as e:
-                st.error(f"Error running scraper: {e}")
-                return False
-
-        if run_scraper_with_env(env):
-            st.success("✅ Scraping complete!")
-            st.rerun() # Refresh to show new counts
+    if st.button("🔥 Run Honors Scraper", type="primary", use_container_width=True):
+        if not username_input or not pin_input:
+            st.error("Please provide both User ID and PIN.")
         else:
-            st.error("❌ Scraping failed. Check logs in the expander above.")
+            # Pass credentials via environment variables for the subprocess
+            env = os.environ.copy()
+            env["USERNAME"] = username_input
+            env["PIN"] = pin_input
+            
+            # We need to wrap run_scraper to accept env
+            def run_scraper_with_env(env_vars):
+                try:
+                    with st.spinner(f"⏳ Extracting data from {len(current_ids)} boards... Please wait."):
+                        process = subprocess.Popen(
+                            ["python", SCRAPER_SCRIPT],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            text=True,
+                            bufsize=1,
+                            env=env_vars
+                        )
+                        
+                        # Consume the output so the process doesn't block, but don't display it
+                        stdout, stderr = process.communicate()
+                        
+                        if process.returncode != 0:
+                            with st.expander("⚠️ View Error Logs"):
+                                st.code(stdout)
+                                if stderr:
+                                    st.code(stderr)
+                            return False
+                        return True
+                except Exception as e:
+                    st.error(f"Error running scraper: {e}")
+                    return False
+
+            if run_scraper_with_env(env):
+                st.success("✅ Scraping complete!")
+                st.rerun() # Refresh to show new counts
+            else:
+                st.error("❌ Scraping failed. Check logs in the expander above.")
+
+with col_help:
+    st.info("""
+    ### 📖 Quick User Guide
+    
+    1.  **Check Details**: Ensure your **User ID** and **PIN** are correct.
+    2.  **Fetch Data**: Click **Run Honors Scraper** to get the latest winners.
+    3.  **Renaming**: In the table below, you can click on any **Title** to change it (e.g. shorten it for the board).
+    4.  **Pick Boards**: Click the checkboxes to select which boards to create.
+    5.  **Create images**: Click **Generate Selected Display Boards**.
+    6.  **ZIP & Exit**: Download your images in the popup, then click **Exit & Cleanup** in the sidebar.
+    """, icon="💡")
 
 st.markdown("---")
 
