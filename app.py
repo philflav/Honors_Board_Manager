@@ -3,6 +3,9 @@ import json
 import os
 import subprocess
 import pandas as pd
+import io
+import zipfile
+import shutil
 from datetime import datetime
 
 # Configuration
@@ -11,7 +14,47 @@ CACHE_FILE = "honors_boards_cache.json"
 SCRAPER_SCRIPT = "honors_scraper.py"
 
 # Page config
-st.set_page_config(page_title="Honors Board Scraper Manager", page_icon="🏆", layout="wide")
+st.set_page_config(page_title="FFGC Honors Board Manager", page_icon="🏆", layout="wide")
+
+# --- Cleanup Automation ---
+
+def cleanup_images():
+    """Wipes all files from the automated_images folder."""
+    folder = "automated_images"
+    if os.path.exists(folder):
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")
+
+# Call cleanup on the first run of the app in this session
+if "cleanup_done" not in st.session_state:
+    cleanup_images()
+    st.session_state.cleanup_done = True
+
+def get_images_zip():
+    """Generates an in-memory ZIP file of all images in automated_images/."""
+    folder = "automated_images"
+    buf = io.BytesIO()
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    
+    files = os.listdir(folder)
+    if not files:
+        return None
+        
+    with zipfile.ZipFile(buf, "w") as zf:
+        for filename in files:
+            file_path = os.path.join(folder, filename)
+            if os.path.isfile(file_path):
+                zf.write(file_path, filename)
+    buf.seek(0)
+    return buf
 
 def load_board_ids():
     """Loads the list of board IDs from the JSON file."""
@@ -60,21 +103,46 @@ def run_scraper():
         returncode = process.wait()
         return returncode == 0
     except Exception as e:
-        st.error(f"Error running scraper: {e}")
-        return False
+        st.error(f"Error: {e}")
+
+@st.dialog("📦 Download Images")
+def download_popup():
+    """Shows a modal dialog for downloading the ZIP of images."""
+    st.write("Your honors board images have been generated successfully!")
+    
+    zip_data = get_images_zip()
+    if zip_data:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        st.download_button(
+            label="💾 Download ZIP of Images",
+            data=zip_data,
+            file_name=f"honors_boards_{timestamp}.zip",
+            mime="application/zip",
+            type="primary",
+            use_container_width=True
+        )
+        st.write("---")
+        if st.button("Cleanup & Close", use_container_width=True):
+            cleanup_images()
+            st.rerun()
+    else:
+        st.warning("No images were found in the output folder. Perhaps generation was skipped for all boards?")
 
 def trigger_image_generation(ids):
     """Runs generate_boards.py for specific IDs."""
     try:
-        st.info(f"🎨 Generating images for {len(ids)} boards...")
-        cmd = ["python", "generate_boards.py"] + [str(i) for i in ids]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0:
-            st.success("✅ Image generation complete!")
-            st.code(result.stdout)
-        else:
-            st.error("❌ Image generation failed.")
-            st.code(result.stderr)
+        with st.spinner(f"🎨 Generating {len(ids)} board images..."):
+            cmd = ["python", "generate_boards.py"] + [str(i) for i in ids]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                st.success("✅ Image generation complete!")
+                # Automatically open the download popup
+                download_popup()
+            else:
+                st.error("❌ Image generation failed.")
+                with st.expander("View Logs"):
+                    st.code(result.stdout)
+                    st.code(result.stderr)
     except Exception as e:
         st.error(f"Error: {e}")
 
@@ -167,13 +235,23 @@ def show_cache_stats():
 
 # --- UI Layout ---
 
-st.title("🏆 Honors Board Management")
+st.title("🏆 FFGC Honors Board Management")
 st.markdown("---")
 
-# Load current state
+# Load current state and environment
 current_ids = load_board_ids()
+from dotenv import load_dotenv
+load_dotenv()
 
-# Sidebar for CRUD
+# --- Sidebar Controls ---
+
+# Exit Button (Top of sidebar for visibility)
+if st.sidebar.button("🚪 Exit & Cleanup", use_container_width=True, type="secondary", help="Deletes all generated images and stops the app session."):
+    cleanup_images()
+    st.sidebar.success("Folder cleared. You may now close this tab.")
+    st.stop()
+
+st.sidebar.markdown("---")
 st.sidebar.header("🛠️ Manage Board IDs")
 
 # Add new ID
@@ -206,13 +284,57 @@ else:
 
 # Main Control Panel (Vertical Stack)
 st.subheader("⚙️ Scraper Controls")
+
+# Credentials section
+col_user, col_pin, _ = st.columns([1, 1, 2])
+with col_user:
+    username_input = st.text_input("User ID", value=os.getenv("USERNAME", ""), help="Your Intelligent Golf username")
+with col_pin:
+    pin_input = st.text_input("PIN", value=os.getenv("PIN", ""), type="password", help="Your Intelligent Golf PIN")
+
 st.write(f"Currently tracking **{len(current_ids)}** boards.")
 
 if st.button("🔥 Run Honors Scraper", type="primary"):
-    if run_scraper():
-        st.success("✅ Scraping complete!")
+    if not username_input or not pin_input:
+        st.error("Please provide both User ID and PIN.")
     else:
-        st.error("❌ Scraping failed. Check logs above.")
+        # Pass credentials via environment variables for the subprocess
+        env = os.environ.copy()
+        env["USERNAME"] = username_input
+        env["PIN"] = pin_input
+        
+        # We need to wrap run_scraper to accept env
+        def run_scraper_with_env(env_vars):
+            try:
+                with st.spinner(f"⏳ Extracting data from {len(current_ids)} boards... Please wait."):
+                    process = subprocess.Popen(
+                        ["python", SCRAPER_SCRIPT],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        bufsize=1,
+                        env=env_vars
+                    )
+                    
+                    # Consume the output so the process doesn't block, but don't display it
+                    stdout, stderr = process.communicate()
+                    
+                    if process.returncode != 0:
+                        with st.expander("⚠️ View Error Logs"):
+                            st.code(stdout)
+                            if stderr:
+                                st.code(stderr)
+                        return False
+                    return True
+            except Exception as e:
+                st.error(f"Error running scraper: {e}")
+                return False
+
+        if run_scraper_with_env(env):
+            st.success("✅ Scraping complete!")
+            st.rerun() # Refresh to show new counts
+        else:
+            st.error("❌ Scraping failed. Check logs in the expander above.")
 
 st.markdown("---")
 
