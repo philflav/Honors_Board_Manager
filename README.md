@@ -45,21 +45,23 @@ A streamlined management application for the **Felixstowe Ferry Golf Club** hono
 
 ---
 
-## 🖥️ Usage
+## 🐳 Docker Deployment
 
-Run the management dashboard locally using Streamlit:
+### Using Docker Compose (Recommended for local)
+The project includes a `docker-compose.yaml` for easy orchestration:
 
+1. **Build and Start**:
+   ```bash
+   docker compose up -d --build
+   ```
+2. **Access**: Open your browser at `http://localhost:8501`.
+3. **Persistance**: Your `honors_boards_cache.json` and `req_boards.json` are mounted as volumes to ensure your board IDs and custom titles are saved even if the container is restarted.
+
+### Using Docker Directly
 ```bash
-streamlit run app.py
+docker build -t honors-board-manager .
+docker run -p 8501:8501 --env-file .env honors-board-manager
 ```
-
-### Workflow:
-1. **Manage IDs**: Add the target Board IDs in the sidebar.
-2. **Scrape**: Click **"Run Honors Scraper"** to fetch the latest data.
-3. **Edit Titles**: Adjust the "Title" field in the results table if necessary.
-4. **Generate**: Check the boards you want to process and click **"Generate Selected Display Boards"**.
-5. **Download**: A popup will appear offering a ZIP of your new images.
-6. **Exit**: Click **"Exit & Cleanup"** in the sidebar to wipe all images from the server.
 
 ---
 
