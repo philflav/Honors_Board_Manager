@@ -1,0 +1,13 @@
+services:
+  honors-board-manager:
+    build: .
+    container_name: honors-board-manager
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      # Persist the board data and cache across container restarts
+      - ./honors_boards_cache.json:/app/honors_boards_cache.json
+      - ./req_boards.json:/app/req_boards.json
+    restart: unless-stopped
