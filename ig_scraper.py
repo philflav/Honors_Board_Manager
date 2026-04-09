@@ -516,6 +516,38 @@ class IntelligentGolfScraper:
                 print(f"Error fetching board {board_id}: {e}")
                 boards_data.append({ 'board_id': board_id, 'error': str(e) })
         return boards_data
+
+    def get_available_boards(self):
+        """Discover all available honors boards from boardcomps.php"""
+        print(f"Discovering available boards from {self.club_url}/boardcomps.php...")
+        self.page.goto(f"{self.club_url.rstrip('/')}/boardcomps.php")
+        self.page.wait_for_timeout(2000)
+        
+        boards = self.page.evaluate("""
+            () => {
+                const results = [];
+                // Look for links like boardcomps.php?board=XX
+                const links = document.querySelectorAll('a[href*="board="]');
+                
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    const match = href.match(/board=(\\d+)/);
+                    if (match) {
+                        const id = match[1];
+                        const title = link.textContent.trim();
+                        // Only add if we have a title and it's not a common nav link
+                        if (title && title.length > 2 && !results.some(b => b.id === id)) {
+                            results.push({ id, title });
+                        }
+                    }
+                });
+                
+                return results;
+            }
+        """)
+        
+        print(f"Found {len(boards)} available boards.")
+        return boards
     
     def save_boards_cache(self, boards_data, filename="honors_boards_cache.json"):
         """Save boards data to local JSON cache"""
@@ -558,6 +590,28 @@ class IntelligentGolfScraper:
                 boards_data = self.get_honors_boards(board_ids)
                 self.save_boards_cache(boards_data, cache_file)
                 return boards_data
+                
+            finally:
+                self.browser.close()
+
+    def run_discovery(self, cache_file="available_boards.json"):
+        """Run the discovery process and save to cache"""
+        with sync_playwright() as p:
+            self.browser = p.chromium.launch(headless=True)
+            self.page = self.browser.new_page()
+            
+            try:
+                if not self.login():
+                    return None
+                
+                boards = self.get_available_boards()
+                
+                if boards:
+                    with open(cache_file, 'w') as f:
+                        json.dump(boards, f, indent=2)
+                    print(f"Discovered boards saved to {cache_file}")
+                
+                return boards
                 
             finally:
                 self.browser.close()

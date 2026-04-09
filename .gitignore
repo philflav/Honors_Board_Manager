@@ -5,6 +5,7 @@ __pycache__/
 
 # Project specific
 .env
+*.png
 automated_images/
 honors_boards_cache.json
 honors_boards_*.zip
