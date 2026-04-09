@@ -13,6 +13,7 @@ A streamlined management application for the **Felixstowe Ferry Golf Club** hono
   - **🎨 Generate Selected**: Create images for your current selection.
   - **🔥 One-Click Automation**: Run the full scrape-and-generate cycle for multiple boards in one click.
 - **Title Personalization**: Edit board titles directly in the management table to ensure the display board looks perfect.
+- **Dual-Format Output**: Generates both high-fidelity full resolution images and optimized 8-bit quantized images for maximum compatibility with various display hardware.
 - **Secure Handling**:
   - **In-Memory ZIP**: Download all generated images in a single ZIP file without storing the archive on disk.
   - **Auto-Cleanup**: Temporary images are wiped on app startup and cleared before every new generation run.
