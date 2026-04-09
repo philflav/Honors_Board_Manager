@@ -20,12 +20,12 @@ board_name_x = 300
 board_name_start_y = 286
 max_title_width = 750
 image_width = background_template.width
-font_size_list = 24
+font_size_list = 22
 text_start_x = 315
-text_start_y = 370
+text_start_y = 360
 text_start_y2 = 375
-row_height = 24.9
-max_rows=22
+row_height = 27
+max_rows=20
 
 def draw_centered_titled(draw, title, y_pos, board_width, max_title_width, base_font_path, initial_size, color):
     current_size = initial_size
@@ -108,9 +108,11 @@ def automate_boards(limit_ids=None):
             # Draw the text on the board copy
             draw_embossed_text(draw, (text_start_x, y_offset), text_string, list_font, gold_color)
 
+        quantized_final_image= final_image.convert("P", palette=Image.WEB, colors=256)
+        quantized_final_image.save(f"automated_images/board_{current_board_id}_quantized.png", optimize=True, compress_level=9)
 
         # Save unique board image
-        final_image.save(f"automated_images/board_{current_board_id}.png")
+        final_image.save(f"automated_images/board_{current_board_id}.png", optimize=True, compress_level=9)
         print(f"Generated image for board {current_board_id}")
 
 if __name__ == "__main__":
