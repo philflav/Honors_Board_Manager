@@ -6,14 +6,16 @@ A streamlined management application for the **Felixstowe Ferry Golf Club** hono
 
 ## 🚀 Features
 
-- **Dynamic Board Management**: Add, view, or remove Board IDs through an interactive sidebar.
-- **Automated Scraping**: Fetches titles, winner lists, and entry counts using `Playwright`.
-- **Title Personalization**: Edit board titles directly in the UI to ensure the display board looks exactly how you want.
-- **Selective Generation**: Choose specific boards to generate images for via an interactive checkbox table.
-- **Integrated Credentials**: Enter your User ID and PIN securely in the app; credentials can also be autopopulated from a `.env` file.
+- **Automated Board Discovery**: Automatically scrapes the club portal to find and list all available honors boards—no more manual ID hunting.
+- **Unified Management Table**: View, select, and manage all boards in a single interactive table.
+- **Integrated Actions**:
+  - **🔍 Scrape Selected**: Fetch data for only the boards you've checked.
+  - **🎨 Generate Selected**: Create images for your current selection.
+  - **🔥 One-Click Automation**: Run the full scrape-and-generate cycle for multiple boards in one click.
+- **Title Personalization**: Edit board titles directly in the management table to ensure the display board looks perfect.
 - **Secure Handling**:
   - **In-Memory ZIP**: Download all generated images in a single ZIP file without storing the archive on disk.
-  - **Auto-Cleanup**: Temporary images are wiped on app startup and can be cleared manually via the **"Exit & Cleanup"** button.
+  - **Auto-Cleanup**: Temporary images are wiped on app startup and cleared before every new generation run.
 
 ---
 
@@ -68,11 +70,13 @@ docker run -p 8501:8501 --env-file .env honors-board-manager
 ## 📁 Project Structure
 
 - `app.py`: Main Streamlit dashboard and UI.
-- `honors_scraper.py`: Scraper entry point (targets `req_boards.json`).
-- `ig_scraper.py`: Core scraping engine using Playwright.
+- `ig_scraper.py`: Core scraping engine featuring automated board discovery.
+- `fetch_available_boards.py`: Standalone script for discovering all existing club boards.
+- `honors_scraper.py`: Scraper entry point for targeted board data extraction.
 - `generate_boards.py`: Logic for creating display images from cached data.
-- `req_boards.json`: Persistent storage for your targeted board IDs.
-- `honors_boards_cache.json`: Local cache of scraped honors board data.
+- `req_boards.json`: Persistent storage for your selected/pinned board IDs.
+- `available_boards.json`: Local cache of discovered board titles and IDs.
+- `honors_boards_cache.json`: Local cache of scraped honors board data (winner lists).
 
 ---
 
