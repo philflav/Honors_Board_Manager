@@ -1,0 +1,64 @@
+{
+  "1": {
+    "background_image": "1column.png",
+    "board_name_font_size": 30,
+    "board_name_start_y": 286,
+    "max_title_width": 750,
+    "font_size_list": 22,
+    "column_x_positions": [
+      315
+    ],
+    "text_start_y": 360,
+    "text_start_y2": 375,
+    "row_height": 27,
+    "max_rows": 20
+  },
+  "2": {
+    "background_image": "2column.png",
+    "board_name_font_size": 35,
+    "board_name_start_y": 120,
+    "max_title_width": 1100,
+    "font_size_list": 22,
+    "column_x_positions": [
+      150,
+      750
+    ],
+    "text_start_y": 200,
+    "text_start_y2": 215,
+    "row_height": 27,
+    "max_rows": 18
+  },
+  "3": {
+    "background_image": "3column.png",
+    "board_name_font_size": 35,
+    "board_name_start_y": 255,
+    "max_title_width": 1100,
+    "font_size_list": 20,
+    "column_x_positions": [
+      136,
+      600,
+      1023
+    ],
+    "text_start_y": 257,
+    "text_start_y2": 270,
+    "row_height": 25,
+    "max_rows": 15
+  },
+  "4": {
+    "background_image": "4column.png",
+    "board_name_font_size": 35,
+    "board_name_start_y": 255,
+    "max_title_width": 1100,
+    "font_size_list": 20,
+    "column_x_positions": [
+      136,
+      500,
+      702,
+      1023
+    ],
+    "text_start_y": 257,
+    "text_start_y2": 270,
+    "row_height": 25,
+    "max_rows": 15
+  }
+}
