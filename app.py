@@ -174,14 +174,14 @@ def show_user_guide():
     if st.button("Close", use_container_width=True):
         st.rerun()
 
-def trigger_image_generation(ids):
+def trigger_image_generation(ids, num_columns=1):
     """Runs generate_boards.py for specific IDs."""
     try:
         # Clear existing images first to prevent accumulation
         cleanup_images()
         
-        with st.spinner(f"🎨 Generating {len(ids)} board images..."):
-            cmd = [sys.executable, "generate_boards.py"] + [str(i) for i in ids]
+        with st.spinner(f"🎨 Generating {len(ids)} board images ({num_columns} col)..."):
+            cmd = [sys.executable, "generate_boards.py", "--columns", str(num_columns)] + [str(i) for i in ids]
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 st.success("✅ Image generation complete!")
@@ -292,7 +292,7 @@ def show_cache_stats(username_input=None, pin_input=None):
         if not scraped_selected:
             st.warning("Select at least one scraped board (Status: ✅).")
         else:
-            trigger_image_generation(scraped_selected)
+            trigger_image_generation(scraped_selected, st.session_state.num_columns)
     
     # Show interactive table using data_editor
     edited_df = st.data_editor(
@@ -356,6 +356,17 @@ username_input = c1.text_input("User ID", value=os.getenv("USERNAME", ""), help=
 pin_input = c2.text_input("PIN", value=os.getenv("PIN", ""), type="password", help="Your Intelligent Golf PIN")
 
 st.sidebar.markdown("---")
+st.sidebar.header("📊 Layout Settings")
+num_columns = st.sidebar.radio(
+    "Number of Columns",
+    options=[1, 2, 3, 4],
+    index=0,
+    horizontal=True,
+    help="Select how many columns the honors board should have.",
+    key="num_columns"
+)
+
+st.sidebar.markdown("---")
 
 if st.sidebar.button("📖 Open User Guide", use_container_width=True):
     show_user_guide()
@@ -398,7 +409,7 @@ if st.button("🔥 Scrape & Generate ALL Selected", type="primary", help="Scrape
             res = subprocess.run(cmd, env=env, capture_output=True, text=True)
             if res.returncode == 0:
                 # Then Generate
-                trigger_image_generation(selected)
+                trigger_image_generation(selected, st.session_state.num_columns)
             else:
                 st.error("❌ Process failed during scraping.")
                 with st.expander("Show Error Logs"):
