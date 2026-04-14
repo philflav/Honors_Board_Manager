@@ -75,15 +75,59 @@ def install_playwright_binaries():
 # Trigger binary install
 install_playwright_binaries()
 
-def load_board_ids():
-    """Loads the list of board IDs from the JSON file."""
+def get_board_capacities():
+    """Calculates total capacity for each column count from board_configs.json."""
+    if not os.path.exists("board_configs.json"):
+        return {1: 16, 2: 36, 3: 44, 4: 58} # Fallback defaults
+    
+    try:
+        with open("board_configs.json", "r") as f:
+            configs = json.load(f)
+        
+        caps = {}
+        for col_str, config in configs.items():
+            cols = int(col_str)
+            max_rows = config["max_rows"]
+            total = 0
+            for i in range(cols):
+                if cols >= 3 and 0 < i < cols - 1:
+                    total += (max_rows - 1)
+                else:
+                    total += max_rows
+            caps[cols] = total
+        return caps
+    except Exception:
+        return {1: 16, 2: 36, 3: 44, 4: 58}
+
+def calculate_best_fit(winners_count, caps):
+    """Suggests the best column count for a given number of winners."""
+    for cols in sorted(caps.keys()):
+        if winners_count <= caps[cols]:
+            return cols
+    return max(caps.keys()) if caps else 1
+
+def load_board_configs():
+    """Loads the per-board configurations from req_boards.json."""
     if os.path.exists(REQ_BOARDS_FILE):
         try:
             with open(REQ_BOARDS_FILE, "r") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, list):
+                    # Migration: convert old list format to new dict format
+                    return {str(bid): {"columns": "Best Fit", "fill": "Progressive"} for bid in data}
+                return data
         except (json.JSONDecodeError, IOError):
-            return []
-    return []
+            return {}
+    return {}
+
+def save_board_configs(configs):
+    """Saves the per-board configurations to req_boards.json."""
+    try:
+        with open(REQ_BOARDS_FILE, "w") as f:
+            json.dump(configs, f, indent=4)
+        return True
+    except IOError:
+        return False
 
 def load_available_boards():
     """Loads the list of discovered boards from available_boards.json."""
@@ -94,15 +138,6 @@ def load_available_boards():
         except (json.JSONDecodeError, IOError):
             return []
     return []
-
-def save_board_ids(board_ids):
-    """Saves the list of board IDs to the JSON file."""
-    try:
-        with open(REQ_BOARDS_FILE, "w") as f:
-            json.dump(sorted(list(set(board_ids))), f, indent=4)
-        return True
-    except IOError:
-        return False
 
 def run_scraper():
     """Executes the honors_scraper.py script."""
@@ -174,14 +209,19 @@ def show_user_guide():
     if st.button("Close", use_container_width=True):
         st.rerun()
 
-def trigger_image_generation(ids, num_columns=1):
-    """Runs generate_boards.py for specific IDs."""
+def trigger_image_generation(ids, board_configs):
+    """Runs generate_boards.py for specific IDs using per-board configs."""
     try:
         # Clear existing images first to prevent accumulation
         cleanup_images()
         
-        with st.spinner(f"🎨 Generating {len(ids)} board images ({num_columns} col)..."):
-            cmd = [sys.executable, "generate_boards.py", "--columns", str(num_columns)] + [str(i) for i in ids]
+        # Prepare the config JSON for the CLI
+        # Only include selected IDs in the config sent to CLI
+        active_configs = {str(bid): board_configs[str(bid)] for bid in ids if str(bid) in board_configs}
+        config_json = json.dumps(active_configs)
+        
+        with st.spinner(f"🎨 Generating {len(ids)} board images..."):
+            cmd = [sys.executable, "generate_boards.py", "--config", config_json] + [str(i) for i in ids]
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 st.success("✅ Image generation complete!")
@@ -195,149 +235,215 @@ def trigger_image_generation(ids, num_columns=1):
     except Exception as e:
         st.error(f"Error: {e}")
 
-def show_cache_stats(username_input=None, pin_input=None):
-    """Displays statistics and handles board selection, scraping, and generation."""
-    selected_ids = load_board_ids()
-    data = []
-    if os.path.exists(CACHE_FILE):
-        try:
-            with open(CACHE_FILE, "r") as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, KeyError):
-            st.error("Error reading cache file.")
-    
-    available_boards_data = load_available_boards()
-    if not available_boards_data:
-        st.info("👋 Welcome! Please click **'🔄 Refresh Available Boards'** in the sidebar to discover boards from the club portal.")
-        return
-
-    # Create combined list of boards
+@st.fragment
+def render_management_panel(data, available_boards_data, caps, username_input, pin_input):
+    """Encapsulates the interactive section to prevent full-page resets."""
+    board_configs = load_board_configs()
     all_available_ids = sorted([int(b['id']) for b in available_boards_data])
+    boards_map = {int(b['id']): b['title'] for b in available_boards_data}
     
     # Initialize session state for selection if not present
     if "selected_ids" not in st.session_state:
-        st.session_state.selected_ids = selected_ids
+        st.session_state.selected_ids = list(board_configs.keys())
+    if "scrape_ids" not in st.session_state:
+        st.session_state.scrape_ids = []
+    if "edit_focus" not in st.session_state:
+        st.session_state.edit_focus = None
 
     stats = []
-    boards_map = {int(b['id']): b['title'] for b in available_boards_data}
-
     for bid in all_available_ids:
+        bid_str = str(bid)
         board_cache = next((b for b in data if b["board_id"] == bid), None)
         status = "✅ Scraped" if board_cache else "⏳ Not Scraped"
         title = board_cache.get("title") if board_cache else boards_map.get(bid, f"Board {bid}")
         winners_count = len(board_cache.get("winners", [])) if board_cache else 0
         
+        config = board_configs.get(bid_str, {})
+        selected_cols = config.get("columns", "Best Fit")
+        
+        if selected_cols == "Best Fit":
+            eff_cols = calculate_best_fit(winners_count, caps)
+        else:
+            eff_cols = int(selected_cols)
+            
+        capacity = caps.get(eff_cols, 0)
+        warning = "⚠️" if winners_count > capacity else ""
+        
         stats.append({
-            "Select": bid in st.session_state.selected_ids,
+            "Scrape": bid_str in st.session_state.scrape_ids,
+            "Edit": st.session_state.edit_focus == bid_str,
+            "Gen": bid_str in st.session_state.selected_ids,
             "Board ID": bid,
             "Title": title,
             "Winners": winners_count,
+            "⚠️": warning,
             "Status": status
         })
     
     df = pd.DataFrame(stats)
     
-    st.subheader("📊 Honors Board Management")
-    
-    # Action Row
-    col_scrape, col_gen, col_all, col_none, _ = st.columns([1.5, 2, 1, 1, 2], vertical_alignment="bottom")
-    
-    # Sync selection back to file when modified
-    def sync_selection(ids):
-        save_board_ids(ids)
+    main_col, side_col = st.columns([2.3, 1], gap="large")
 
-    # Process Selection Changes BEFORE buttons
-    # We use the data_editor later, but we need the current selection for buttons
-    
-    if col_all.button("✅ Select All", use_container_width=True):
-        st.session_state.selected_ids = all_available_ids
-        sync_selection(all_available_ids)
-        st.rerun()
-    if col_none.button("❌ Clear", use_container_width=True):
-        st.session_state.selected_ids = []
-        sync_selection([])
-        st.rerun()
-
-    # Scrape Button
-    if col_scrape.button("🔍 Scrape Selected", type="secondary", use_container_width=True):
-        current_selected = st.session_state.selected_ids
-        if not current_selected:
-            st.warning("Select boards to scrape first.")
-        elif not username_input or not pin_input:
-            st.error("Provide User ID and PIN in the sidebar.")
-        else:
-            env = os.environ.copy()
-            env["USERNAME"] = username_input
-            env["PIN"] = pin_input
-            
-            with st.spinner(f"⏳ Scraping {len(current_selected)} boards..."):
-                # Run honors_scraper.py with IDs as arguments
-                cmd = [sys.executable, SCRAPER_SCRIPT] + [str(i) for i in current_selected]
-                process = subprocess.run(cmd, env=env, capture_output=True, text=True)
-                
-                if process.returncode == 0:
-                    st.success("✅ Scraping complete!")
-                    st.rerun()
-                else:
-                    st.error("❌ Scraping failed.")
-                    with st.expander("Show Error Logs"):
-                        st.code(process.stdout + "\n" + process.stderr)
-
-    # Generation Button
-    if col_gen.button("🎨 Generate Selected", type="primary", use_container_width=True):
-        current_selected = st.session_state.selected_ids
-        # Only boards that are scraped can be generated
-        scraped_selected = [bid for bid in current_selected if any(b["board_id"] == bid for b in data)]
+    with main_col:
+        # Action Row with even button sizes
+        col_scrape, col_gen, col_all, col_none, _ = st.columns([1, 1, 1, 1, 1], vertical_alignment="bottom")
         
-        if not scraped_selected:
-            st.warning("Select at least one scraped board (Status: ✅).")
+        if col_all.button("✅ All (Gen)", use_container_width=True, help="Select all boards for generation"):
+            st.session_state.selected_ids = [str(bid) for bid in all_available_ids]
+            # Ensure they have a config
+            for bid in st.session_state.selected_ids:
+                if bid not in board_configs:
+                    board_configs[bid] = {"columns": "Best Fit", "fill": "Progressive"}
+            save_board_configs(board_configs)
+            st.rerun(scope="fragment")
+
+        if col_none.button("❌ Clear (Gen)", use_container_width=True, help="Unselect all boards for generation"):
+            st.session_state.selected_ids = []
+            st.rerun(scope="fragment")
+
+        if col_scrape.button("🔍 Scrape Selected", type="secondary", use_container_width=True, help="Scrapes checked boards"):
+            current_selected = st.session_state.scrape_ids
+            if not current_selected:
+                st.warning("Select boards to scrape first.")
+            elif not username_input or not pin_input:
+                st.error("Provide User ID and PIN in the sidebar.")
+            else:
+                env = os.environ.copy()
+                env["USERNAME"] = username_input
+                env["PIN"] = pin_input
+                with st.spinner(f"⏳ Scraping {len(current_selected)} boards..."):
+                    cmd = [sys.executable, SCRAPER_SCRIPT] + [str(i) for i in current_selected]
+                    process = subprocess.run(cmd, env=env, capture_output=True, text=True)
+                    if process.returncode == 0:
+                        st.success("✅ Scraping complete!")
+                        st.rerun(scope="app") 
+                    else:
+                        st.error("❌ Scraping failed.")
+
+        if col_gen.button("🎨 Generate Selected", type="primary", use_container_width=True):
+            current_selected = st.session_state.selected_ids
+            scraped_selected = [bid for bid in current_selected if any(str(b["board_id"]) == bid for b in data)]
+            if not scraped_selected:
+                st.warning("Select at least one scraped board.")
+            else:
+                final_configs = {}
+                for bid in scraped_selected:
+                    config = board_configs.get(bid, {"columns": "Best Fit", "fill": "Progressive"})
+                    cols = config["columns"]
+                    if cols == "Best Fit":
+                        board_cache = next((b for b in data if str(b["board_id"]) == bid), None)
+                        w_count = len(board_cache["winners"]) if board_cache else 0
+                        cols = calculate_best_fit(w_count, caps)
+                    final_configs[bid] = {"columns": cols, "fill": config.get("fill", "Progressive").lower()}
+                trigger_image_generation(scraped_selected, final_configs)
+
+        # Show interactive table
+        edited_df = st.data_editor(
+            df,
+            column_config={
+                "Scrape": st.column_config.CheckboxColumn("Scrape", help="Select for scraping", width="small"),
+                "Edit": st.column_config.CheckboxColumn("⚙️", help="Click to configure", width="small"),
+                "Gen": st.column_config.CheckboxColumn("Gen", help="Select for generation", width="small"),
+                "Board ID": st.column_config.NumberColumn(format="%d"),
+                "⚠️": st.column_config.TextColumn("⚠️", width="small"),
+                "Status": st.column_config.TextColumn("Status"),
+            },
+            disabled=["Board ID", "Winners", "Status", "⚠️"],
+            hide_index=True,
+            key="board_selector",
+            use_container_width=True
+        )
+
+    # RIGHT COLUMN: Configuration Pane
+    with side_col:
+        focused_bid = None
+        for _, row in edited_df.iterrows():
+            if row["Edit"]:
+                focused_bid = str(row["Board ID"])
+                st.session_state.edit_focus = focused_bid
+                break
+        
+        if not focused_bid:
+             st.session_state.edit_focus = None
+
+        if st.session_state.edit_focus:
+            bid = st.session_state.edit_focus
+            board_cache = next((b for b in data if str(b["board_id"]) == bid), None)
+            config = board_configs.get(bid, {"columns": "Best Fit", "fill": "Progressive"})
+            
+            st.markdown(f"### ⚙️ Board Settings: {bid}")
+            title_input = st.text_input("Board Title", value=board_cache.get("title", f"Board {bid}") if board_cache else boards_map.get(int(bid)), key=f"title_{bid}")
+            
+            w_count = len(board_cache["winners"]) if board_cache else 0
+            best_fit_val = calculate_best_fit(w_count, caps)
+            st.info(f"**Winners:** {w_count}  \n**Recommended Layout:** {best_fit_val} Col(s)")
+            
+            new_fmt = st.selectbox("Columns", options=["Best Fit", "1", "2", "3", "4"], index=["Best Fit", "1", "2", "3", "4"].index(str(config.get("columns", "Best Fit"))), key=f"fmt_{bid}")
+            new_fill = st.selectbox("Fill Method", options=["Progressive", "Balanced"], index=["Progressive", "Balanced"].index(config.get("fill", "Progressive")), key=f"fill_{bid}")
+            
+            if new_fmt != str(config.get("columns")) or new_fill != config.get("fill") or (board_cache and title_input != board_cache["title"]):
+                board_configs[bid] = {"columns": new_fmt, "fill": new_fill}
+                save_board_configs(board_configs)
+                if board_cache and title_input != board_cache["title"]:
+                    board_cache["title"] = title_input
+                    with open(CACHE_FILE, "w") as f:
+                        json.dump(data, f, indent=2)
+                st.rerun(scope="app") 
         else:
-            trigger_image_generation(scraped_selected, st.session_state.num_columns)
-    
-    # Show interactive table using data_editor
-    edited_df = st.data_editor(
-        df,
-        column_config={
-            "Select": st.column_config.CheckboxColumn("Select", default=False),
-            "Board ID": st.column_config.NumberColumn(format="%d"),
-            "Status": st.column_config.TextColumn("Status"),
-        },
-        disabled=["Board ID", "Winners", "Status"],
-        hide_index=True,
-        key="board_selector"
-    )
+            st.markdown("### ⚙️ Board Settings")
+            st.info("👈 Click the gear icon (**⚙️**) in the table to configure a board.")
 
-    # Update session state and save to file if selection changed
-    new_selection = edited_df[edited_df["Select"]]["Board ID"].tolist()
-    if set(new_selection) != set(st.session_state.selected_ids):
-        st.session_state.selected_ids = new_selection
-        sync_selection(new_selection)
+    # Update selection
+    new_gen = edited_df[edited_df["Gen"]]["Board ID"].astype(str).tolist()
+    new_scrape = edited_df[edited_df["Scrape"]]["Board ID"].astype(str).tolist()
+    if set(new_gen) != set(st.session_state.selected_ids) or set(new_scrape) != set(st.session_state.scrape_ids):
+        st.session_state.selected_ids = new_gen
+        st.session_state.scrape_ids = new_scrape
+        st.rerun(scope="fragment")
 
-    # Save title changes back to the cache file
-    title_changed = False
-    for _, row in edited_df.iterrows():
-        bid = row["Board ID"]
-        new_title = row["Title"]
-        for board in data:
-            if board["board_id"] == bid and board["title"] != new_title:
-                board["title"] = new_title
-                title_changed = True
-    
-    if title_changed:
+def show_cache_stats(username_input=None, pin_input=None):
+    """Displays statistics and handles board selection, scraping, and generation."""
+    if not os.path.exists(CACHE_FILE):
+        st.info("No scraped data found yet. Please run scraping first.")
+        data = []
+    else:
         try:
-            with open(CACHE_FILE, "w") as f:
-                json.dump(data, f, indent=2)
-            st.toast("✅ Titles updated!")
-        except IOError as e:
-            st.error(f"Failed to save titles: {e}")
+            with open(CACHE_FILE, "r") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, KeyError):
+            st.error("Error reading cache file.")
+            data = []
+    
+    # Load available boards list
+    if not os.path.exists("available_boards.json"):
+        st.info("👋 Welcome! Please click **'🔄 Refresh Available Boards'** in the sidebar.")
+        return
+
+    with open("available_boards.json", "r") as f:
+        available_boards_data = json.load(f)
+
+    caps = get_board_capacities()
+    render_management_panel(data, available_boards_data, caps, username_input, pin_input)
 
 # --- UI Layout ---
+
+st.markdown("""
+<style>
+    div[st-vertical-alignment="bottom"] button {
+        height: 45px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 st.title("🏆 FFGC Honors Board Management")
 st.markdown("---")
 
 # Load current state and environment
-current_ids = load_board_ids()
+board_configs = load_board_configs()
+current_ids = list(board_configs.keys())
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -354,17 +460,6 @@ st.sidebar.header("🔐 Credentials")
 c1, c2 = st.sidebar.columns(2)
 username_input = c1.text_input("User ID", value=os.getenv("USERNAME", ""), help="Your Intelligent Golf username")
 pin_input = c2.text_input("PIN", value=os.getenv("PIN", ""), type="password", help="Your Intelligent Golf PIN")
-
-st.sidebar.markdown("---")
-st.sidebar.header("📊 Layout Settings")
-num_columns = st.sidebar.radio(
-    "Number of Columns",
-    options=[1, 2, 3, 4],
-    index=0,
-    horizontal=True,
-    help="Select how many columns the honors board should have.",
-    key="num_columns"
-)
 
 st.sidebar.markdown("---")
 
@@ -408,8 +503,28 @@ if st.button("🔥 Scrape & Generate ALL Selected", type="primary", help="Scrape
             cmd = [sys.executable, SCRAPER_SCRIPT] + [str(i) for i in selected]
             res = subprocess.run(cmd, env=env, capture_output=True, text=True)
             if res.returncode == 0:
-                # Then Generate
-                trigger_image_generation(selected, st.session_state.num_columns)
+                # Then Generate with correct configs
+                board_configs = load_board_configs()
+                caps = get_board_capacities()
+                # Load cache again to get winner counts
+                with open(CACHE_FILE, "r") as f:
+                    cache_data = json.load(f)
+                
+                final_configs = {}
+                for bid in selected:
+                    config = board_configs.get(bid, {"columns": "Best Fit", "fill": "Progressive"})
+                    cols = config["columns"]
+                    if cols == "Best Fit":
+                        board_cache = next((b for b in cache_data if str(b["board_id"]) == bid), None)
+                        w_count = len(board_cache["winners"]) if board_cache else 0
+                        cols = calculate_best_fit(w_count, caps)
+                    
+                    final_configs[bid] = {
+                        "columns": cols,
+                        "fill": config.get("fill", "Progressive").lower()
+                    }
+                
+                trigger_image_generation(selected, final_configs)
             else:
                 st.error("❌ Process failed during scraping.")
                 with st.expander("Show Error Logs"):

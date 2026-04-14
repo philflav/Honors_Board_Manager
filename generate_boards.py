@@ -85,18 +85,30 @@ def split_winners(winners, num_cols, capacities):
         start += count
     return result
 
-def automate_boards(columns, limit_ids=None):
-    # Load configuration
-    config = load_config(columns)
-    bg_path = os.path.join("Board_background_images", config["background_image"])
+def split_winners_progressive(winners, num_cols, capacities):
+    """Splits winners into columns sequentially (fill column 1, then 2, etc.)."""
+    total_cap = sum(capacities)
+    if total_cap == 0: return [[] for _ in range(num_cols)]
     
-    if not os.path.exists(bg_path):
-        print(f"Warning: Background image {bg_path} not found! Skipping generation.")
-        return
+    # Cap winners to total capacity to avoid missing years in the middle
+    if len(winners) > total_cap:
+        winners = winners[:total_cap]
+    
+    result = []
+    start = 0
+    for cap in capacities:
+        count = min(cap, len(winners) - start)
+        result.append(winners[start:start+count])
+        start += count
+    
+    # Ensure we return the correct number of columns even if some are empty
+    while len(result) < num_cols:
+        result.append([])
+        
+    return result
 
-    background_template = Image.open(bg_path)
-    image_width = background_template.width
-
+def automate_boards(global_columns, limit_ids=None, per_board_config=None):
+    # Load configuration
     if not os.path.exists("automated_images"):
         os.makedirs("automated_images")
     if not os.path.exists("tmp_images"):
@@ -106,12 +118,32 @@ def automate_boards(columns, limit_ids=None):
         data = json.load(f)
 
     first_image_path = None
+    first_image_8bit_path = None
 
     for board in data:
         current_board_id = board["board_id"]
         if limit_ids and current_board_id not in limit_ids:
             continue
             
+        # Determine columns and fill method for this board
+        board_id_str = str(current_board_id)
+        if per_board_config and board_id_str in per_board_config:
+            columns = int(per_board_config[board_id_str].get("columns", global_columns))
+            fill_method = per_board_config[board_id_str].get("fill", "progressive").lower()
+        else:
+            columns = global_columns
+            fill_method = "progressive"
+            
+        config = load_config(columns)
+        bg_path = os.path.join("Board_background_images", config["background_image"])
+        
+        if not os.path.exists(bg_path):
+            print(f"Warning: Background image {bg_path} not found! Skipping generation.")
+            continue
+
+        background_template = Image.open(bg_path)
+        image_width = background_template.width
+        
         final_image = background_template.copy()
         draw = ImageDraw.Draw(final_image)
 
@@ -130,8 +162,11 @@ def automate_boards(columns, limit_ids=None):
             else:
                 capacities.append(max_rows)
 
-        # Split and draw winners
-        winner_columns = split_winners(board["winners"], columns, capacities)
+        # Split winners based on method
+        if fill_method == "balanced":
+            winner_columns = split_winners(board["winners"], columns, capacities)
+        else:
+            winner_columns = split_winners_progressive(board["winners"], columns, capacities)
         
         for col_idx, col_winners in enumerate(winner_columns):
             if col_idx >= len(config["column_x_positions"]):
@@ -187,8 +222,17 @@ def automate_boards(columns, limit_ids=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate Honors Boards")
     parser.add_argument("ids", nargs="*", type=int, help="Optional board IDs to generate")
-    parser.add_argument("--columns", "-c", type=int, default=1, choices=[1, 2, 3, 4], help="Number of columns (1-4)")
+    parser.add_argument("--columns", "-c", type=int, default=1, choices=[1, 2, 3, 4], help="Global columns fallback")
+    parser.add_argument("--config", type=str, help="JSON string with per-board settings")
     
     args = parser.parse_args()
     
-    automate_boards(args.columns, limit_ids=args.ids if args.ids else None)
+    per_board_config = None
+    if args.config:
+        try:
+            per_board_config = json.loads(args.config)
+        except json.JSONDecodeError:
+            print("Error: Invalid JSON for --config")
+            sys.exit(1)
+            
+    automate_boards(args.columns, limit_ids=args.ids if args.ids else None, per_board_config=per_board_config)
