@@ -1,6 +1,10 @@
 {
     "59": {
-        "columns": "Best Fit",
+        "columns": "3",
+        "fill": "Progressive"
+    },
+    "64": {
+        "columns": "3",
         "fill": "Progressive"
     }
 }
