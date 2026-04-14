@@ -59,18 +59,23 @@ def split_winners(winners, num_cols, capacities):
     total_cap = sum(capacities)
     if total_cap == 0: return [[] for _ in range(num_cols)]
     
-    # Calculate how many winners per column based on proportion of total capacity
+    # Cap winners to total capacity to avoid missing years in the middle
+    if len(winners) > total_cap:
+        winners = winners[:total_cap]
+    
     num_winners = len(winners)
     counts = []
-    remaining = num_winners
-    for i in range(num_cols):
-        count = int((capacities[i] / total_cap) * num_winners)
-        counts.append(count)
-        remaining -= count
+    acc_cap = 0
+    acc_winners = 0
     
-    # Distribute remainders to columns that have space
-    for i in range(remaining):
-        counts[i % num_cols] += 1
+    for i in range(num_cols):
+        acc_cap += capacities[i]
+        # Proportionally, how many winners should be in columns 0 to i
+        target_acc_winners = (acc_cap / total_cap) * num_winners
+        current_acc_winners = int(round(target_acc_winners))
+        count = current_acc_winners - acc_winners
+        counts.append(count)
+        acc_winners = current_acc_winners
         
     # Split the list
     result = []
@@ -158,15 +163,26 @@ def automate_boards(columns, limit_ids=None):
         final_image.save(output_path, optimize=True, compress_level=9)
         print(f"Generated {output_path}")
         
+        # 8-bit Quantized save
+        quantized_path = f"automated_images/board_{current_board_id}_col{columns}_8bit.png"
+        quantized_image = final_image.convert('P', palette=Image.ADAPTIVE, colors=256)
+        quantized_image.save(quantized_path, optimize=True)
+        print(f"Generated quantized {quantized_path}")
+        
         if first_image_path is None:
             first_image_path = output_path
+            first_image_8bit_path = quantized_path
 
-    # Store test image if requested
+    # Store test images
     if first_image_path and os.path.exists(first_image_path):
         import shutil
         test_path = "tmp_images/test_board.png"
         shutil.copy(first_image_path, test_path)
-        print(f"Stored test image in {test_path}")
+        
+        test_8bit_path = "tmp_images/test_board_8bit.png"
+        if os.path.exists(first_image_8bit_path):
+            shutil.copy(first_image_8bit_path, test_8bit_path)
+            print(f"Stored test images in {test_path} and {test_8bit_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate Honors Boards")
