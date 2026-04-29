@@ -1,10 +1,14 @@
 {
-    "59": {
-        "columns": "3",
+    "1": {
+        "columns": "1",
         "fill": "Progressive"
     },
-    "64": {
+    "2": {
         "columns": "3",
+        "fill": "Balanced"
+    },
+    "3": {
+        "columns": "1",
         "fill": "Progressive"
     }
 }

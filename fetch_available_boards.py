@@ -24,13 +24,13 @@ def main():
     cache_file = "available_boards.json"
     
     scraper = IntelligentGolfScraper(CLUB_URL, USERNAME, PIN)
-    print("🚀 Triggering board discovery...")
+    print("Triggering board discovery...")
     boards = scraper.run_discovery(cache_file=cache_file)
     
     if boards:
-        print(f"✅ Successfully discovered {len(boards)} boards")
+        print(f"Successfully discovered {len(boards)} boards")
     else:
-        print("❌ Failed to discover boards")
+        print("Failed to discover boards")
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -144,17 +144,7 @@ def automate_boards(global_columns, limit_ids=None, per_board_config=None):
         background_template = Image.open(bg_path)
         image_width = background_template.width
         
-        final_image = background_template.copy()
-        draw = ImageDraw.Draw(final_image)
-
-        # Draw the board name
-        board_name = board["title"]
-        draw_centered_titled(draw, board_name, config["board_name_start_y"], image_width, 
-                             config["max_title_width"], font_path, config["board_name_font_size"], gold_color)
-
-        # Prepare capacities for balancing
         max_rows = config["max_rows"]
-        # Middle columns get one less slot if num_cols >= 3
         capacities = []
         for i in range(columns):
             if columns >= 3 and 0 < i < columns - 1:
@@ -162,51 +152,72 @@ def automate_boards(global_columns, limit_ids=None, per_board_config=None):
             else:
                 capacities.append(max_rows)
 
-        # Split winners based on method
-        if fill_method == "balanced":
-            winner_columns = split_winners(board["winners"], columns, capacities)
+        total_cap = sum(capacities)
+        if total_cap == 0: total_cap = 1
+
+        all_winners = board["winners"]
+        if not all_winners:
+            chunks = [[]]
         else:
-            winner_columns = split_winners_progressive(board["winners"], columns, capacities)
-        
-        for col_idx, col_winners in enumerate(winner_columns):
-            if col_idx >= len(config["column_x_positions"]):
-                break
-                
-            x_pos = config["column_x_positions"][col_idx]
-            is_middle = (columns >= 3 and 0 < col_idx < columns - 1)
+            chunks = [all_winners[i:i + total_cap] for i in range(0, len(all_winners), total_cap)]
+
+        board_title_safe = "".join([c for c in board["title"] if c.isalnum() or c in " -_"]).strip().replace(" ", "_")
+
+        for part_idx, chunk_winners in enumerate(chunks):
+            final_image = background_template.copy()
+            draw = ImageDraw.Draw(final_image)
+
+            # Draw the board name
+            board_name = board["title"]
+            draw_centered_titled(draw, board_name, config["board_name_start_y"], image_width, 
+                                 config["max_title_width"], font_path, config["board_name_font_size"], gold_color)
+
+            # Split winners based on method
+            if fill_method == "balanced":
+                winner_columns = split_winners(chunk_winners, columns, capacities)
+            else:
+                winner_columns = split_winners_progressive(chunk_winners, columns, capacities)
             
-            for row_idx, winner_entry in enumerate(col_winners):
-                if row_idx >= capacities[col_idx]:
+            for col_idx, col_winners in enumerate(winner_columns):
+                if col_idx >= len(config["column_x_positions"]):
                     break
                     
-                # If middle column, skip the first row
-                effective_row_idx = row_idx + 1 if is_middle else row_idx
+                x_pos = config["column_x_positions"][col_idx]
+                is_middle = (columns >= 3 and 0 < col_idx < columns - 1)
                 
-                if effective_row_idx == 0:
-                    y_pos = config["text_start_y2"]
-                else:
-                    y_pos = config["text_start_y2"] + effective_row_idx * config["row_height"]
-                
-                year = winner_entry["year"]
-                winner_name = winner_entry["winner"]
-                text_string = f"{year}  {winner_name}"
-                list_font = ImageFont.truetype(font_path, config["font_size_list"])
-                
-                draw_embossed_text(draw, (x_pos, y_pos), text_string, list_font, gold_color)
+                for row_idx, winner_entry in enumerate(col_winners):
+                    if row_idx >= capacities[col_idx]:
+                        break
+                        
+                    # If middle column, skip the first row
+                    effective_row_idx = row_idx + 1 if is_middle else row_idx
+                    
+                    if effective_row_idx == 0:
+                        y_pos = config["text_start_y2"]
+                    else:
+                        y_pos = config["text_start_y2"] + effective_row_idx * config["row_height"]
+                    
+                    year = winner_entry["year"]
+                    winner_name = winner_entry["winner"]
+                    text_string = f"{year}  {winner_name}"
+                    list_font = ImageFont.truetype(font_path, config["font_size_list"])
+                    
+                    draw_embossed_text(draw, (x_pos, y_pos), text_string, list_font, gold_color)
 
-        output_path = f"automated_images/board_{current_board_id}_col{columns}.png"
-        final_image.save(output_path, optimize=True, compress_level=9)
-        print(f"Generated {output_path}")
-        
-        # 8-bit Quantized save
-        quantized_path = f"automated_images/board_{current_board_id}_col{columns}_8bit.png"
-        quantized_image = final_image.convert('P', palette=Image.ADAPTIVE, colors=256)
-        quantized_image.save(quantized_path, optimize=True)
-        print(f"Generated quantized {quantized_path}")
-        
-        if first_image_path is None:
-            first_image_path = output_path
-            first_image_8bit_path = quantized_path
+            # Output Paths
+            output_path = f"automated_images/{board_title_safe}-{part_idx + 1}.png"
+            final_image.save(output_path, optimize=True, compress_level=9)
+            print(f"Generated {output_path}")
+            
+            # 8-bit Quantized save
+            quantized_path = f"automated_images/{board_title_safe}-{part_idx + 1}_8bit.png"
+            quantized_image = final_image.convert('P', palette=Image.ADAPTIVE, colors=256)
+            quantized_image.save(quantized_path, optimize=True)
+            print(f"Generated quantized {quantized_path}")
+            
+            if first_image_path is None:
+                first_image_path = output_path
+                first_image_8bit_path = quantized_path
 
     # Store test images
     if first_image_path and os.path.exists(first_image_path):

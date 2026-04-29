@@ -1,64 +1,64 @@
 {
   "1": {
     "background_image": "1column.png",
-    "board_name_font_size": 30,
+    "board_name_font_size": 35,
     "board_name_start_y": 286,
     "max_title_width": 750,
     "font_size_list": 22,
     "column_x_positions": [
-      315
+      302
     ],
-    "text_start_y": 360,
-    "text_start_y2": 375,
+    "text_start_y": 378,
+    "text_start_y2": 378,
     "row_height": 27,
-    "max_rows": 16
+    "max_rows": 20
   },
   "2": {
     "background_image": "2column.png",
     "board_name_font_size": 35,
-    "board_name_start_y": 120,
-    "max_title_width": 1100,
-    "font_size_list": 18,
+    "board_name_start_y": 282,
+    "max_title_width": 750,
+    "font_size_list": 22,
     "column_x_positions": [
-      136,
-      1031
+      302,
+      520
     ],
-    "text_start_y": 200,
-    "text_start_y2": 273,
-    "row_height": 20,
-    "max_rows": 18
+    "text_start_y": 374,
+    "text_start_y2": 374,
+    "row_height": 27,
+    "max_rows": 20
   },
   "3": {
     "background_image": "3column.png",
     "board_name_font_size": 35,
-    "board_name_start_y": 255,
+    "board_name_start_y": 404,
     "max_title_width": 1100,
-    "font_size_list": 20,
+    "font_size_list": 18,
     "column_x_positions": [
-      136,
-      600,
-      1023
+      98,
+      380,
+      755
     ],
-    "text_start_y": 257,
-    "text_start_y2": 270,
+    "text_start_y": 404,
+    "text_start_y2": 427,
     "row_height": 25,
-    "max_rows": 15
+    "max_rows": 10
   },
   "4": {
     "background_image": "4column.png",
-    "board_name_font_size": 35,
-    "board_name_start_y": 255,
-    "max_title_width": 1100,
+    "board_name_font_size": 30,
+    "board_name_start_y": 380,
+    "max_title_width": 500,
     "font_size_list": 20,
     "column_x_positions": [
-      136,
-      500,
-      702,
-      1023
+      102,
+      371,
+      508,
+      756
     ],
-    "text_start_y": 257,
-    "text_start_y2": 270,
+    "text_start_y": 420,
+    "text_start_y2": 405,
     "row_height": 25,
-    "max_rows": 15
+    "max_rows": 10
   }
 }
