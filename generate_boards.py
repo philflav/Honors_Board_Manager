@@ -4,11 +4,44 @@ import os
 import argparse
 import sys
 
-# 1. Setup - Cross-platform font path
-if os.name == 'nt': # Windows
-    font_path = "C:/Windows/Fonts/times.ttf"
-else: # Linux (Docker/Render)
-    font_path = "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"
+# 1. Setup - Cross-platform font path with validation
+def get_font_path():
+    """Find a valid serif font path for the current system."""
+    if os.name == 'nt':  # Windows
+        possible_paths = [
+            "C:/Windows/Fonts/times.ttf",
+            "C:/Windows/Fonts/timesbd.ttf",
+            "C:/Windows/Fonts/arial.ttf"
+        ]
+    else:  # Linux (Docker/Render)
+        possible_paths = [
+            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+            "/usr/share/fonts/truetype/liberation2/LiberationSerif-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"
+        ]
+    
+    for path in possible_paths:
+        if os.path.exists(path):
+            print(f"Using font: {path}")
+            return path
+    
+    print("Warning: No suitable font found. Will use default font.")
+    return None  # No font found
+
+font_path = get_font_path()
+
+def load_font(size):
+    """Load font with fallback to default if custom font fails."""
+    if font_path:
+        try:
+            return ImageFont.truetype(font_path, size)
+        except (OSError, IOError) as e:
+            print(f"Warning: Failed to load font {font_path}: {e}")
+    
+    # Fallback to default font
+    print("Warning: Using default font - text may not appear as expected")
+    return ImageFont.load_default()
 
 CONFIG_FILE = "board_configs.json"
 CACHE_FILE = "honors_boards_cache.json"
@@ -34,15 +67,15 @@ def load_config(columns):
     
     return configs[col_str]
 
-def draw_centered_titled(draw, title, y_pos, board_width, max_title_width, base_font_path, initial_size, color):
+def draw_centered_titled(draw, title, y_pos, board_width, max_title_width, initial_size, color):
     current_size = initial_size
-    font = ImageFont.truetype(base_font_path, current_size)
+    font = load_font(current_size)
     
     text_width = draw.textbbox((0, 0), title, font=font)[2]
     
     while text_width > max_title_width and current_size > 10:
         current_size -= 1
-        font = ImageFont.truetype(base_font_path, current_size)
+        font = load_font(current_size)
         text_width = draw.textbbox((0, 0), title, font=font)[2]
 
     x_pos = (board_width - text_width) // 2
@@ -170,7 +203,7 @@ def automate_boards(global_columns, limit_ids=None, per_board_config=None):
             # Draw the board name
             board_name = board["title"]
             draw_centered_titled(draw, board_name, config["board_name_start_y"], image_width, 
-                                 config["max_title_width"], font_path, config["board_name_font_size"], gold_color)
+                                 config["max_title_width"], config["board_name_font_size"], gold_color)
 
             # Split winners based on method
             if fill_method == "balanced":
@@ -200,7 +233,7 @@ def automate_boards(global_columns, limit_ids=None, per_board_config=None):
                     year = winner_entry["year"]
                     winner_name = winner_entry["winner"]
                     text_string = f"{year}  {winner_name}"
-                    list_font = ImageFont.truetype(font_path, config["font_size_list"])
+                    list_font = load_font(config["font_size_list"])
                     
                     draw_embossed_text(draw, (x_pos, y_pos), text_string, list_font, gold_color)
 

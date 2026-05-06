@@ -7,7 +7,12 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN apt-get update && apt-get install -y fonts-liberation && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y fonts-liberation fonts-liberation2 && rm -rf /var/lib/apt/lists/*
+
+# Verify font installation
+RUN echo "Checking for Liberation fonts:" && \
+    find /usr/share/fonts -name "*Liberation*" -type f 2>/dev/null || echo "No Liberation fonts found"
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install the Chromium browser binary
