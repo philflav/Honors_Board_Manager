@@ -7,13 +7,21 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN apt-get update && apt-get install -y fonts-liberation fonts-liberation2 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Install Liberation fonts via apt and verify installation
+RUN apt-get update && apt-get install -y fonts-liberation fonts-liberation2 && \
+    fc-cache -fv
+
+# Create symlinks to ensure fonts are in the expected location
+RUN mkdir -p /usr/share/fonts/truetype/liberation && \
+    find /usr/share/fonts -name "*Liberation*.ttf" -exec cp {} /usr/share/fonts/truetype/liberation/ \; 2>/dev/null || true && \
+    fc-cache -fv
 
 # Verify font installation
 RUN echo "Checking for Liberation fonts:" && \
     find /usr/share/fonts -name "*Liberation*" -type f 2>/dev/null || echo "No Liberation fonts found"
-
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Install the Chromium browser binary
 RUN playwright install chromium

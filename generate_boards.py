@@ -16,16 +16,27 @@ def get_font_path():
     else:  # Linux (Docker/Render)
         possible_paths = [
             "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+            "/usr/share/fonts/liberation/LiberationSerif-Regular.ttf",
             "/usr/share/fonts/truetype/liberation2/LiberationSerif-Regular.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
         ]
-    
+
+    # Try to find any available serif font using fc-list if available
+    try:
+        import subprocess
+        result = subprocess.run(['fc-list', ':family=serif', '--format=%{file}\\n'],
+                              capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            fc_paths = [p.strip() for p in result.stdout.strip().split('\\n') if p.strip()]
+            possible_paths = fc_paths + possible_paths
+    except (FileNotFoundError, Exception):
+        pass
+
     for path in possible_paths:
         if os.path.exists(path):
             print(f"Using font: {path}")
             return path
-    
+
     print("Warning: No suitable font found. Will use default font.")
     return None  # No font found
 
