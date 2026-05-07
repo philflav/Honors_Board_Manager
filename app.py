@@ -39,6 +39,13 @@ if "cleanup_done" not in st.session_state:
     cleanup_images()
     st.session_state.cleanup_done = True
 
+if "ig_logged_in" not in st.session_state:
+    st.session_state.ig_logged_in = None
+if "ig_logged_in_user" not in st.session_state:
+    st.session_state.ig_logged_in_user = ""
+if "ig_last_username" not in st.session_state:
+    st.session_state.ig_last_username = ""
+
 def get_images_zip():
     """Generates an in-memory ZIP file of all images in automated_images/."""
     folder = "automated_images"
@@ -64,7 +71,6 @@ def install_playwright_binaries():
     try:
         # Check if we are running in a cloud-like environment (check for /mount/src or similar)
         # Or just run it once to be safe - it's fast if already installed
-        st.info("🌐 Checking for browser binaries...")
         subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
         # Note: --with-deps usually needs sudo, but Streamlit Cloud environment 
         # often requires certain packages in packages.txt if it fails here.
@@ -173,57 +179,60 @@ def run_scraper():
 @st.dialog("📦 Download Images")
 def download_popup():
     """Shows a modal dialog for downloading the ZIP of images."""
+    st.markdown("""
+    <style>
+    .stDialog .stImage img {
+        max-height: 40vh !important;
+        width: auto !important;
+        object-fit: contain;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.write("Your honors board images have been generated successfully!")
     
     folder = "automated_images"
     image_files = []
     if os.path.exists(folder):
-        # Filter out the 8-bit quantized versions for the preview count
         image_files = [f for f in os.listdir(folder) if f.lower().endswith(('.png', '.jpg', '.jpeg')) and "_8bit" not in f]
     
-    # Show a preview and selectbox if images are generated
-    if len(image_files) > 0:
-        if len(image_files) == 1:
-            selected_image = image_files[0]
-        else:
-            selected_image = st.selectbox("Select board to preview:", sorted(image_files))
-            
+    if len(image_files) == 0:
+        st.warning("No images were found in the output folder.")
+        return
+
+    selected_image = image_files[0]
+    if len(image_files) > 1:
+        selected_image = st.selectbox("Select board to preview:", sorted(image_files))
+
+    preview_col, actions_col = st.columns([2, 1], gap="medium")
+
+    with preview_col:
         img_path = os.path.join(folder, selected_image)
-        st.image(img_path, caption=f"Preview: {selected_image}", use_container_width=True)
-        
-        # Also provide a direct download for the selected image
+        st.image(img_path, caption=f"Preview: {selected_image}", width=380)
+
+    with actions_col:
         with open(img_path, "rb") as f:
             st.download_button(
                 label=f"💾 Download {selected_image}",
                 data=f,
                 file_name=selected_image,
                 mime="image/png",
-                type="secondary" if len(image_files) > 1 else "primary",
+                use_container_width=True
+            )
+        zip_data = get_images_zip()
+        if zip_data:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            st.download_button(
+                label="💾 Download ZIP of All",
+                data=zip_data,
+                file_name=f"honors_boards_{timestamp}.zip",
+                mime="application/zip",
                 use_container_width=True
             )
         st.write("---")
-        if len(image_files) > 1:
-            st.caption("Download all generated images as a ZIP archive below:")
-        else:
-            st.caption("Or download as a ZIP archive below:")
-
-    zip_data = get_images_zip()
-    if zip_data:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        st.download_button(
-            label="💾 Download ZIP of Images",
-            data=zip_data,
-            file_name=f"honors_boards_{timestamp}.zip",
-            mime="application/zip",
-            type="secondary" if len(image_files) == 1 else "primary",
-            use_container_width=True
-        )
-        st.write("---")
-        if st.button("Cleanup & Close", use_container_width=True):
+        if st.button("🗑️ Cleanup & Close", use_container_width=True):
             cleanup_images()
             st.rerun()
-    else:
-        st.warning("No images were found in the output folder. Perhaps generation was skipped for all boards?")
 
 @st.dialog("📖 User Guide")
 def show_user_guide():
@@ -543,7 +552,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏆 FFGC Honors Board Management")
+st.title("🏆 FFGC Honors Board Management v1.1")
 st.markdown("---")
 
 # Load current state and environment
@@ -565,6 +574,49 @@ st.sidebar.header("🔐 Credentials")
 c1, c2 = st.sidebar.columns(2)
 username_input = c1.text_input("User ID", value=os.getenv("USERNAME", ""), help="Your Intelligent Golf username")
 pin_input = c2.text_input("PIN", value=os.getenv("PIN", ""), type="password", help="Your Intelligent Golf PIN")
+
+# Reset login state if username changed
+if username_input != st.session_state.ig_last_username:
+    st.session_state.ig_logged_in = None
+    st.session_state.ig_logged_in_user = ""
+    st.session_state.ig_last_username = username_input
+
+log_col1, log_col2 = st.sidebar.columns([1, 1])
+login_clicked = log_col1.button("🔑 Test Login", use_container_width=True, type="primary")
+logout_clicked = log_col2.button("🚪 Logout", use_container_width=True)
+
+if logout_clicked:
+    st.session_state.ig_logged_in = None
+    st.session_state.ig_logged_in_user = ""
+    st.rerun()
+
+if login_clicked:
+    if not username_input or not pin_input:
+        st.sidebar.error("Enter User ID and PIN first.")
+    else:
+        with st.spinner("Verifying credentials with Intelligent Golf..."):
+            env = os.environ.copy()
+            env["USERNAME"] = username_input
+            env["PIN"] = pin_input
+            process = subprocess.run(
+                [sys.executable, "verify_login.py"],
+                env=env, capture_output=True, text=True
+            )
+            if process.returncode == 0:
+                st.session_state.ig_logged_in = True
+                st.session_state.ig_logged_in_user = username_input
+                st.rerun()
+            else:
+                st.session_state.ig_logged_in = False
+                st.session_state.ig_logged_in_user = ""
+
+ig_status = st.session_state.ig_logged_in
+if ig_status is True:
+    st.sidebar.markdown(f"🟢 **Logged in as** `{st.session_state.ig_logged_in_user}`")
+elif ig_status is False:
+    st.sidebar.markdown("🔴 **Invalid credentials**")
+else:
+    st.sidebar.markdown("⚪ **Not tested**")
 
 st.sidebar.markdown("---")
 
