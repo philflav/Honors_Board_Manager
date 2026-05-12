@@ -1,14 +1,386 @@
 {
-    "1": {
-        "columns": "1",
-        "fill": "Progressive"
-    },
-    "2": {
-        "columns": "3",
-        "fill": "Balanced"
-    },
-    "3": {
-        "columns": "1",
-        "fill": "Progressive"
-    }
+  "1": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Ladies",
+    "durationMs": null
+  },
+  "2": {
+    "columns": "3",
+    "fill": "Progressive",
+    "category": "Ladies",
+    "durationMs": null
+  },
+  "3": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Ladies",
+    "durationMs": null
+  },
+  "4": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "5": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "6": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "8": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "9": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "10": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "11": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "12": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "13": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "14": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "15": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "17": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "18": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "19": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "20": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "21": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "22": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "24": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "25": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "26": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "27": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "34": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "35": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "37": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "38": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "39": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "41": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "42": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "43": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "44": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "45": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "46": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "47": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "50": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "51": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "53": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "54": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "56": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "57": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "58": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "59": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "60": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "62": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "63": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "64": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "65": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "66": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "67": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "68": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "69": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "70": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "76": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "92": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "96": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "97": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "98": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "99": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "102": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "103": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "104": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  },
+  "105": {
+    "columns": "1",
+    "fill": "Progressive",
+    "category": "Mens",
+    "durationMs": null
+  }
 }
