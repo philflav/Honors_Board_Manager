@@ -11,6 +11,8 @@ automated_images/
 honors_boards_cache.json
 honors_boards_*.zip
 golf_results_*.json
+req_boards.json
 scorecards_*.json
 scorecards_*.csv
 team_scores_*.csv
+carousel_output/

@@ -9,6 +9,7 @@ import shutil
 import sys
 import math
 from datetime import datetime
+import carousel_builder
 
 # Configuration
 REQ_BOARDS_FILE = "req_boards.json"
@@ -121,7 +122,11 @@ def load_board_configs():
                 data = json.load(f)
                 if isinstance(data, list):
                     # Migration: convert old list format to new dict format
-                    return {str(bid): {"columns": "1", "fill": "Progressive"} for bid in data}
+                    return {str(bid): {"columns": "1", "fill": "Progressive", "category": "Mens", "durationMs": None} for bid in data}
+                # Ensure defaults for carousel fields
+                for bid, cfg in data.items():
+                    cfg.setdefault("category", "Mens")
+                    cfg.setdefault("durationMs", None)
                 return data
         except (json.JSONDecodeError, IOError):
             return {}
@@ -442,9 +447,12 @@ def render_management_panel(data, available_boards_data, caps, username_input, p
                 current_fmt = "1"
             new_fmt = st.selectbox("Columns", options=["1", "2", "3", "4"], index=["1", "2", "3", "4"].index(current_fmt), key=f"fmt_{bid}")
             new_fill = st.selectbox("Fill Method", options=["Progressive", "Balanced"], index=["Progressive", "Balanced"].index(config.get("fill", "Progressive")), key=f"fill_{bid}")
+            new_category = st.selectbox("Category", options=["Mens", "Ladies", "Mixed"], index=["Mens", "Ladies", "Mixed"].index(config.get("category", "Mens")), key=f"cat_{bid}")
+            current_duration = config.get("durationMs")
+            new_duration = st.number_input("Display Duration (ms)", value=int(current_duration) if current_duration else 0, min_value=0, step=1000, key=f"dur_{bid}", help="Override per-board display duration. 0 = use category default.")
             
-            if new_fmt != str(config.get("columns")) or new_fill != config.get("fill") or (board_cache and title_input != board_cache["title"]):
-                board_configs[bid] = {"columns": new_fmt, "fill": new_fill}
+            if new_fmt != str(config.get("columns")) or new_fill != config.get("fill") or (board_cache and title_input != board_cache["title"]) or new_category != config.get("category", "Mens") or new_duration != (config.get("durationMs") or 0):
+                board_configs[bid] = {"columns": new_fmt, "fill": new_fill, "category": new_category, "durationMs": new_duration if new_duration > 0 else None}
                 save_board_configs(board_configs)
                 if board_cache and title_input != board_cache["title"]:
                     board_cache["title"] = title_input
@@ -513,6 +521,48 @@ def render_management_panel(data, available_boards_data, caps, username_input, p
                     st.error("❌ Process failed during scraping.")
                     with st.expander("Show Error Logs"):
                         st.code(res.stdout + "\n" + res.stderr)
+
+    if st.button("💾 Export for USB", type="secondary", help="Generate images and export carousel_config.json + images to carousel_output/", use_container_width=True):
+        selected = st.session_state.get('selected_ids', [])
+        if not selected:
+            st.warning("Please select at least one board first.")
+        else:
+            board_configs = load_board_configs()
+            caps = get_board_capacities()
+            with open(CACHE_FILE, "r") as f:
+                cache_data = json.load(f)
+            # Generate images first (inline generation, avoid download popup)
+            scraped_selected = [bid for bid in selected if any(str(b["board_id"]) == bid for b in data)]
+            if not scraped_selected:
+                st.warning("Select at least one scraped board.")
+            else:
+                final_configs = {}
+                for bid in scraped_selected:
+                    config = board_configs.get(bid, {"columns": "1", "fill": "Progressive"})
+                    cols = config["columns"]
+                    if cols == "Best Fit":
+                        board_cache = next((b for b in cache_data if str(b["board_id"]) == bid), None)
+                        w_count = len(board_cache["winners"]) if board_cache else 0
+                        cols = calculate_best_fit(w_count, caps)
+                    final_configs[bid] = {"columns": cols, "fill": config.get("fill", "Progressive").lower()}
+                with st.spinner("🎨 Generating images for USB export..."):
+                    cleanup_images()
+                    config_json = json.dumps(final_configs)
+                    cmd = [sys.executable, "generate_boards.py", "--config", config_json] + [str(i) for i in scraped_selected]
+                    gen_result = subprocess.run(cmd, capture_output=True, text=True)
+                    if gen_result.returncode != 0:
+                        st.error("❌ Image generation failed.")
+                        with st.expander("View Logs"):
+                            st.code(gen_result.stdout)
+                            st.code(gen_result.stderr)
+                    else:
+                        # Build carousel export
+                        display_config = carousel_builder.load_display_config()
+                        result = carousel_builder.export_carousel(selected, board_configs, display_config, cache_data)
+                        if result:
+                            st.success(f"✅ USB export ready in `{result}/`")
+                        else:
+                            st.error("❌ USB export failed.")
 
 
 def show_cache_stats(username_input=None, pin_input=None):
@@ -617,6 +667,39 @@ elif ig_status is False:
     st.sidebar.markdown("🔴 **Invalid credentials**")
 else:
     st.sidebar.markdown("⚪ **Not tested**")
+
+st.sidebar.markdown("---")
+
+# --- Carousel Settings ---
+st.sidebar.header("📺 Carousel Settings")
+display_config = carousel_builder.load_display_config()
+
+fallback_duration = st.sidebar.number_input(
+    "Global fallback (ms)", 
+    value=display_config.get("globalConfig", {}).get("fallbackDurationMs", 8000),
+    min_value=1000, step=1000,
+    key="global_fallback"
+)
+
+with st.sidebar.expander("Per-category defaults", expanded=False):
+    for cat_name in ["Mens", "Ladies", "Mixed"]:
+        st.markdown(f"**{cat_name}**")
+        cat_cfg = display_config.get("categories", {}).get(cat_name, {})
+        col1, col2 = st.columns(2)
+        d_dur = col1.number_input("Duration (ms)", value=cat_cfg.get("defaultDurationMs", 8000), min_value=1000, step=1000, key=f"cat_dur_{cat_name}")
+        d_tag = col2.text_input("Theme tag", value=cat_cfg.get("themeTag", cat_name.lower()), key=f"cat_tag_{cat_name}")
+        c_top = st.text_input("Top colour", value=cat_cfg.get("backgroundTopColor", "#1a1a2e"), key=f"cat_top_{cat_name}")
+        c_bot = st.text_input("Bottom colour", value=cat_cfg.get("backgroundBottomColor", "#16213e"), key=f"cat_bot_{cat_name}")
+        
+        display_config.setdefault("categories", {})[cat_name] = {
+            "defaultDurationMs": d_dur,
+            "themeTag": d_tag,
+            "backgroundTopColor": c_top,
+            "backgroundBottomColor": c_bot
+        }
+
+display_config.setdefault("globalConfig", {})["fallbackDurationMs"] = fallback_duration
+carousel_builder.save_display_config(display_config)
 
 st.sidebar.markdown("---")
 
