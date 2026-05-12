@@ -1,5 +1,41 @@
 [
   {
+    "id": "114",
+    "title": "JOHNSON TROPHY"
+  },
+  {
+    "id": "113",
+    "title": "KEN CUTTING TROPHY"
+  },
+  {
+    "id": "112",
+    "title": "FAMILY FOURSOMES"
+  },
+  {
+    "id": "111",
+    "title": "THE HOCKLEY CUP"
+  },
+  {
+    "id": "110",
+    "title": "CAPTAINS GREENSOMES"
+  },
+  {
+    "id": "109",
+    "title": "MENS WINTER LEAGUE"
+  },
+  {
+    "id": "108",
+    "title": "MENS REMEMBRANCE DAY MEDAL"
+  },
+  {
+    "id": "107",
+    "title": "MENS DECEMBER MEDAL"
+  },
+  {
+    "id": "106",
+    "title": "MENS JANUARY MEDAL"
+  },
+  {
     "id": "25",
     "title": "LADIES ADAMS TROPHY"
   },
@@ -181,15 +217,11 @@
   },
   {
     "id": "34",
-    "title": "MENS CLUB CHAMPIONSHIP"
+    "title": "MENS CLUB CHAMPION -The John Cook Cup"
   },
   {
     "id": "54",
     "title": "BAWDSEY GOLD MEDAL"
-  },
-  {
-    "id": "99",
-    "title": "Bawdsey Gold medal"
   },
   {
     "id": "56",
@@ -213,7 +245,7 @@
   },
   {
     "id": "62",
-    "title": "VETERANS TROPHY"
+    "title": "VETERANS TROPHY 65+"
   },
   {
     "id": "63",
@@ -237,22 +269,106 @@
   },
   {
     "id": "68",
-    "title": "PEPE VASES"
+    "title": "PEPPE VASES"
   },
   {
     "id": "69",
-    "title": "KERSEY CUP"
+    "title": "MENS CLUB NETT CHAMPION  - The Kersey Cup"
   },
   {
     "id": "70",
     "title": "CAPTAINS PRIZE"
   },
   {
+    "id": "71",
+    "title": "RABBITS CUP"
+  },
+  {
+    "id": "73",
+    "title": "FRISKEN SALVER"
+  },
+  {
+    "id": "74",
+    "title": "SOUTHWOLD JACK TROPHY"
+  },
+  {
+    "id": "75",
+    "title": "WEMYSS TROPHY"
+  },
+  {
     "id": "76",
     "title": "THROGMORTON"
   },
   {
+    "id": "77",
+    "title": "POLLOCK CUP"
+  },
+  {
+    "id": "78",
+    "title": "WINCHILSEA GOLD MEDAL"
+  },
+  {
+    "id": "79",
+    "title": "MARTELLO TROPHY"
+  },
+  {
+    "id": "80",
+    "title": "PAST CAPTAIN'S TROPHY"
+  },
+  {
+    "id": "81",
+    "title": "BILL BANNISTER TROPHY"
+  },
+  {
+    "id": "82",
+    "title": "MENS SENIOR CHAMPION - The Butterworth Trophy"
+  },
+  {
+    "id": "83",
+    "title": "MENS SENIOR NETT CHAMPION -The Haskell Trophy"
+  },
+  {
+    "id": "84",
+    "title": "TED SAVAGE MEMORIAL TROPHY"
+  },
+  {
+    "id": "85",
+    "title": "DON DONOVAN DECANTER"
+  },
+  {
+    "id": "86",
+    "title": "GEOFF STEPHENS TROPHY"
+  },
+  {
+    "id": "87",
+    "title": "MULLEY MILLENIUM ROSE BOWL"
+  },
+  {
+    "id": "88",
+    "title": "MULLEY CUP"
+  },
+  {
+    "id": "89",
+    "title": "GILLINGWATER TROPHY"
+  },
+  {
+    "id": "90",
+    "title": "SCHWER TROPHY"
+  },
+  {
+    "id": "91",
+    "title": "CAPTAINS CUP"
+  },
+  {
     "id": "92",
     "title": "BISHOPS CHALICE"
+  },
+  {
+    "id": "93",
+    "title": "BURGESS BOWL"
+  },
+  {
+    "id": "94",
+    "title": "WINTER LEAGUE"
   }
 ]

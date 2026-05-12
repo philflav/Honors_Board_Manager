@@ -213,8 +213,9 @@ def automate_boards(global_columns, limit_ids=None, per_board_config=None):
 
             # Draw the board name
             board_name = board["title"]
+            title_font_size = 30 if len(board_name) > 18 else config["board_name_font_size"]
             draw_centered_titled(draw, board_name, config["board_name_start_y"], image_width, 
-                                 config["max_title_width"], config["board_name_font_size"], gold_color)
+                                 config["max_title_width"], title_font_size, gold_color)
 
             # Split winners based on method
             if fill_method == "balanced":

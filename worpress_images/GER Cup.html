@@ -1,0 +1,230 @@
+<!-- DIGITAL SIGNAGE PLAQUE - G E R CUP (5 COLUMNS, 24 ROWS) -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:wght@400;600&display=swap');
+
+  .signage-wrapper {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 1vh 1vw;
+    background-color: transparent;
+  }
+
+  .signage-plaque {
+    background: #0f172a;
+    background-image: radial-gradient(circle at top center, #1e293b 0%, #020617 100%);
+    border: 0.6vh solid #856527;
+    border-image: linear-gradient(135deg, #d4af37, #856527, #f3d686, #856527) 1;
+    
+    width: 100%;
+    height: 100%;
+    min-height: 94vh;
+    
+    /* Reduced top padding to move the table up */
+    padding: 2vh 2vw 3vh 2vw; 
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    font-family: 'Playfair Display', serif;
+  }
+
+  .signage-plaque::before {
+    content: "";
+    position: absolute;
+    top: 1.5vh; left: 1.5vh; right: 1.5vh; bottom: 1.5vh;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    pointer-events: none;
+  }
+
+  /* --- HEADER STYLING --- */
+  .hb-header {
+    text-align: center;
+    margin-bottom: 2.5vh; 
+    position: relative;
+    z-index: 2;
+  }
+
+  .hb-title {
+    font-family: 'Cinzel', serif;
+    color: #d4af37;
+    font-size: 3vw; 
+    margin: 0 0 0.5vh 0;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+  }
+
+  /* --- VERTICAL COLUMN LAYOUT --- */
+  .hb-grid {
+    column-count: 5;
+    column-gap: 3vw;
+    column-rule: 1px solid rgba(212, 175, 55, 0.2);
+    
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    
+    /* STRICT ROW LIMIT: 
+       84vh perfectly fits 24 rows at 3.5vh per row (3.2vh height + 0.3vh margin). 
+       Capacity is now 5 columns x 24 rows = 120 slots. */
+    height: 84vh; 
+    overflow: hidden; 
+  }
+
+  .hb-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    /* Strict sizing to maintain the 24 row math */
+    height: 3.2vh; 
+    margin-bottom: 0.3vh;
+    border-bottom: 1px dotted rgba(212, 175, 55, 0.2);
+    
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .hb-year {
+    color: #d4af37;
+    font-weight: 700;
+    font-family: 'Cinzel', serif;
+    font-size: 1.05vw; 
+  }
+
+  .hb-name {
+    color: #f8fafc;
+    font-weight: 400;
+    font-size: 1.05vw; 
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 0.5vw;
+  }
+</style>
+
+<div class="signage-wrapper">
+  <div class="signage-plaque">
+    
+    <div class="hb-header">
+      <h1 class="hb-title">G E R Cup</h1>
+    </div>
+
+    <div class="hb-grid">
+      <!-- 106 Winners flow top-to-bottom across 5 columns, max 24 items per column -->
+      <div class="hb-row"><span class="hb-year">2026</span><span class="hb-name">Paul Doughty</span></div>
+      <div class="hb-row"><span class="hb-year">2025</span><span class="hb-name">Jonathan Balmforth</span></div>
+      <div class="hb-row"><span class="hb-year">2024</span><span class="hb-name">Steven Daniels</span></div>
+      <div class="hb-row"><span class="hb-year">2023</span><span class="hb-name">Dean Mundy</span></div>
+      <div class="hb-row"><span class="hb-year">2022</span><span class="hb-name">James Selby</span></div>
+      <div class="hb-row"><span class="hb-year">2021</span><span class="hb-name">David Braithwaite</span></div>
+      <div class="hb-row"><span class="hb-year">2020</span><span class="hb-name">Jimmy Price</span></div>
+      <div class="hb-row"><span class="hb-year">2019</span><span class="hb-name">Ryan Homes</span></div>
+      <div class="hb-row"><span class="hb-year">2018</span><span class="hb-name">M Linney</span></div>
+      <div class="hb-row"><span class="hb-year">2017</span><span class="hb-name">M Thomas</span></div>
+      <div class="hb-row"><span class="hb-year">2016</span><span class="hb-name">B Sayers</span></div>
+      <div class="hb-row"><span class="hb-year">2015</span><span class="hb-name">M Linney</span></div>
+      <div class="hb-row"><span class="hb-year">2014</span><span class="hb-name">C Dreyer</span></div>
+      <div class="hb-row"><span class="hb-year">2013</span><span class="hb-name">A Crane</span></div>
+      <div class="hb-row"><span class="hb-year">2012</span><span class="hb-name">W Pearce</span></div>
+      <div class="hb-row"><span class="hb-year">2011</span><span class="hb-name">A Clarke</span></div>
+      <div class="hb-row"><span class="hb-year">2010</span><span class="hb-name">D Munro</span></div>
+      <div class="hb-row"><span class="hb-year">2009</span><span class="hb-name">D Munro</span></div>
+      <div class="hb-row"><span class="hb-year">2008</span><span class="hb-name">V H Davies</span></div>
+      <div class="hb-row"><span class="hb-year">2007</span><span class="hb-name">A M R Vartan</span></div>
+      <div class="hb-row"><span class="hb-year">2006</span><span class="hb-name">R C Brown</span></div>
+      <div class="hb-row"><span class="hb-year">2005</span><span class="hb-name">V H Davies</span></div>
+      <div class="hb-row"><span class="hb-year">2004</span><span class="hb-name">C Cook</span></div>
+      <div class="hb-row"><span class="hb-year">2003</span><span class="hb-name">D A Marshall</span></div>
+      
+      <div class="hb-row"><span class="hb-year">2002</span><span class="hb-name">J Shiells</span></div>
+      <div class="hb-row"><span class="hb-year">2001</span><span class="hb-name">D M Pipe</span></div>
+      <div class="hb-row"><span class="hb-year">2000</span><span class="hb-name">S Walden</span></div>
+      <div class="hb-row"><span class="hb-year">1999</span><span class="hb-name">D Pipe</span></div>
+      <div class="hb-row"><span class="hb-year">1998</span><span class="hb-name">K Slator</span></div>
+      <div class="hb-row"><span class="hb-year">1997</span><span class="hb-name">M Thomas</span></div>
+      <div class="hb-row"><span class="hb-year">1996</span><span class="hb-name">P Kenworthy</span></div>
+      <div class="hb-row"><span class="hb-year">1995</span><span class="hb-name">B Haworth</span></div>
+      <div class="hb-row"><span class="hb-year">1994</span><span class="hb-name">T P Lewindon</span></div>
+      <div class="hb-row"><span class="hb-year">1993</span><span class="hb-name">C J Thomas</span></div>
+      <div class="hb-row"><span class="hb-year">1992</span><span class="hb-name">B J Maddison</span></div>
+      <div class="hb-row"><span class="hb-year">1991</span><span class="hb-name">E M Hall</span></div>
+      <div class="hb-row"><span class="hb-year">1990</span><span class="hb-name">M D Rees</span></div>
+      <div class="hb-row"><span class="hb-year">1989</span><span class="hb-name">N Goodall</span></div>
+      <div class="hb-row"><span class="hb-year">1988</span><span class="hb-name">P Stewart</span></div>
+      <div class="hb-row"><span class="hb-year">1987</span><span class="hb-name">H J Maule</span></div>
+      <div class="hb-row"><span class="hb-year">1986</span><span class="hb-name">P M Harrison</span></div>
+      <div class="hb-row"><span class="hb-year">1985</span><span class="hb-name">B Wright</span></div>
+      <div class="hb-row"><span class="hb-year">1984</span><span class="hb-name">S Colson</span></div>
+      <div class="hb-row"><span class="hb-year">1983</span><span class="hb-name">P Howe</span></div>
+      <div class="hb-row"><span class="hb-year">1982</span><span class="hb-name">P A Balsom</span></div>
+      <div class="hb-row"><span class="hb-year">1981</span><span class="hb-name">R A Carter</span></div>
+      <div class="hb-row"><span class="hb-year">1980</span><span class="hb-name">R B Read</span></div>
+      <div class="hb-row"><span class="hb-year">1979</span><span class="hb-name">G J Stephens</span></div>
+      
+      <div class="hb-row"><span class="hb-year">1978</span><span class="hb-name">B Bennett</span></div>
+      <div class="hb-row"><span class="hb-year">1977</span><span class="hb-name">D Read</span></div>
+      <div class="hb-row"><span class="hb-year">1976</span><span class="hb-name">R W Bone</span></div>
+      <div class="hb-row"><span class="hb-year">1975</span><span class="hb-name">M G Tope</span></div>
+      <div class="hb-row"><span class="hb-year">1974</span><span class="hb-name">D Dockery</span></div>
+      <div class="hb-row"><span class="hb-year">1973</span><span class="hb-name">A C Hall</span></div>
+      <div class="hb-row"><span class="hb-year">1972</span><span class="hb-name">J M Wootton</span></div>
+      <div class="hb-row"><span class="hb-year">1971</span><span class="hb-name">J G Goldswain</span></div>
+      <div class="hb-row"><span class="hb-year">1970</span><span class="hb-name">G C Nunn</span></div>
+      <div class="hb-row"><span class="hb-year">1969</span><span class="hb-name">W R Bannister</span></div>
+      <div class="hb-row"><span class="hb-year">1968</span><span class="hb-name">W R Bannister</span></div>
+      <div class="hb-row"><span class="hb-year">1967</span><span class="hb-name">P W Godbold</span></div>
+      <div class="hb-row"><span class="hb-year">1966</span><span class="hb-name">B Girling</span></div>
+      <div class="hb-row"><span class="hb-year">1965</span><span class="hb-name">H Hodgson</span></div>
+      <div class="hb-row"><span class="hb-year">1964</span><span class="hb-name">J V Fennell</span></div>
+      <div class="hb-row"><span class="hb-year">1963</span><span class="hb-name">P E G Moss</span></div>
+      <div class="hb-row"><span class="hb-year">1962</span><span class="hb-name">J Haig</span></div>
+      <div class="hb-row"><span class="hb-year">1961</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1960</span><span class="hb-name">H Hodgson</span></div>
+      <div class="hb-row"><span class="hb-year">1959</span><span class="hb-name">C R H Farmer Colonel</span></div>
+      <div class="hb-row"><span class="hb-year">1958</span><span class="hb-name">W H Haines</span></div>
+      <div class="hb-row"><span class="hb-year">1957</span><span class="hb-name">E E Crooks Flt Lt USAF</span></div>
+      <div class="hb-row"><span class="hb-year">1956</span><span class="hb-name">J G Gardener</span></div>
+      <div class="hb-row"><span class="hb-year">1955</span><span class="hb-name">F C Durrant</span></div>
+      
+      <div class="hb-row"><span class="hb-year">1954</span><span class="hb-name">I H Kimber</span></div>
+      <div class="hb-row"><span class="hb-year">1953</span><span class="hb-name">N E E Murch</span></div>
+      <div class="hb-row"><span class="hb-year">1952</span><span class="hb-name">H W R Runnacles</span></div>
+      <div class="hb-row"><span class="hb-year">1951</span><span class="hb-name">A H Pharaoh</span></div>
+      <div class="hb-row"><span class="hb-year">1950</span><span class="hb-name">A H Pharaoh</span></div>
+      <div class="hb-row"><span class="hb-year">1949</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1948</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1947</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1946</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1945</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1944</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1943</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1942</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1941</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1940</span><span class="hb-name">Second World War</span></div>
+      <div class="hb-row"><span class="hb-year">1939</span><span class="hb-name">W Cmdr Martin</span></div>
+      <div class="hb-row"><span class="hb-year">1938</span><span class="hb-name">None</span></div>
+      <div class="hb-row"><span class="hb-year">1937</span><span class="hb-name">R Howard-Reid</span></div>
+      <div class="hb-row"><span class="hb-year">1936</span><span class="hb-name">A Howlett</span></div>
+      <div class="hb-row"><span class="hb-year">1935</span><span class="hb-name">E W Bignell</span></div>
+      <div class="hb-row"><span class="hb-year">1934</span><span class="hb-name">O V Bunn</span></div>
+      <div class="hb-row"><span class="hb-year">1933</span><span class="hb-name">C C Worrall</span></div>
+      <div class="hb-row"><span class="hb-year">1932</span><span class="hb-name">H Waters</span></div>
+      <div class="hb-row"><span class="hb-year">1931</span><span class="hb-name">F W T Layton</span></div>
+      
+      <div class="hb-row"><span class="hb-year">1930</span><span class="hb-name">C B Wincott</span></div>
+      <div class="hb-row"><span class="hb-year">1929</span><span class="hb-name">C C Havell</span></div>
+      <div class="hb-row"><span class="hb-year">1928</span><span class="hb-name">C E Worthington</span></div>
+      <div class="hb-row"><span class="hb-year">1927</span><span class="hb-name">A E Boys</span></div>
+      <div class="hb-row"><span class="hb-year">1926</span><span class="hb-name">C J Andrews</span></div>
+      <div class="hb-row"><span class="hb-year">1925</span><span class="hb-name">C J Andrews</span></div>
+      <div class="hb-row"><span class="hb-year">1924</span><span class="hb-name">A J Andrews</span></div>
+      <div class="hb-row"><span class="hb-year">1923</span><span class="hb-name">J Worrall</span></div>
+      <div class="hb-row"><span class="hb-year">1922</span><span class="hb-name">A J Andrews</span></div>
+      <div class="hb-row"><span class="hb-year">1921</span><span class="hb-name">D A L Shipton</span></div>
+    </div>
+
+  </div>
+</div>

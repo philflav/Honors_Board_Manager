@@ -1,26 +1,59 @@
 /* FFGC Honors Board Manager — custom styles */
 
+/* ------------------------------------------------------------------ */
+/*  Theme variables (light default)                                    */
+/* ------------------------------------------------------------------ */
+:root,
+[data-bs-theme="light"] {
+    --sidebar-bg: #fff;
+    --sidebar-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --sidebar-heading: #333;
+    --config-bg: #f8f9fa;
+    --table-row-hover: rgba(13,110,253,0.04);
+    --border-color: #dee2e6;
+}
+
+[data-bs-theme="dark"] {
+    --sidebar-bg: #1e1e1e;
+    --sidebar-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --sidebar-heading: #e0e0e0;
+    --config-bg: #1e1e1e;
+    --table-row-hover: rgba(13,110,253,0.12);
+    --border-color: #444;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Base                                                                */
+/* ------------------------------------------------------------------ */
 body {
     background-color: #f8f9fa;
 }
 
-/* Sidebar styling */
+[data-bs-theme="dark"] body {
+    background-color: #121212;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sidebar                                                            */
+/* ------------------------------------------------------------------ */
 .sidebar-section {
-    background: #fff;
+    background: var(--sidebar-bg);
     border-radius: 6px;
     padding: 0.75rem;
     margin-bottom: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: var(--sidebar-shadow);
 }
 
 .sidebar-section h5 {
     font-size: 0.9rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #333;
+    color: var(--sidebar-heading);
 }
 
-/* Table improvements */
+/* ------------------------------------------------------------------ */
+/*  Table                                                              */
+/* ------------------------------------------------------------------ */
 .table {
     font-size: 0.85rem;
     margin-bottom: 0;
@@ -35,7 +68,54 @@ body {
     vertical-align: middle;
 }
 
-/* Board config details summary */
+/* Responsive table wrapper — ~14 rows visible */
+.table-responsive {
+    max-height: 580px;
+    overflow-y: auto;
+}
+
+.table-responsive table {
+    margin-bottom: 0;
+}
+
+.table-responsive thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--table-row-hover);
+}
+
+[data-bs-theme="dark"] .table-bordered {
+    border-color: var(--border-color);
+}
+
+[data-bs-theme="dark"] .table-bordered th,
+[data-bs-theme="dark"] .table-bordered td {
+    border-color: var(--border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Board config panel                                                  */
+/* ------------------------------------------------------------------ */
+.config-panel {
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.config-panel-inner {
+    background: var(--config-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+/* ------------------------------------------------------------------ */
+/*  General                                                             */
+/* ------------------------------------------------------------------ */
 details summary {
     cursor: pointer;
     user-select: none;
@@ -45,23 +125,19 @@ details summary:focus {
     outline: none;
 }
 
-/* Alert styling */
 .alert {
     font-size: 0.9rem;
     padding: 0.5rem 0.75rem;
 }
 
-/* Badge sizing */
 .badge {
     font-size: 0.75rem;
 }
 
-/* Button spacing */
 .btn-group-spaced .btn {
     margin-right: 0.25rem;
 }
 
-/* Make the filter input stand out */
 #filter-input {
     border-color: #dee2e6;
 }
@@ -71,30 +147,10 @@ details summary:focus {
     box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.15);
 }
 
-/* Responsive table wrapper */
-.table-responsive {
-    max-height: 65vh;
-    overflow-y: auto;
-}
-
-/* Table row hover highlight */
-.table-hover tbody tr:hover {
-    background-color: rgba(13,110,253,0.04);
-}
-
-/* Config panel */
-.config-panel {
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-}
-
-/* Quick action buttons row */
 .quick-actions .btn {
     font-size: 0.8rem;
 }
 
-/* Carousel settings nested details */
 details details {
     margin-top: 0.5rem;
 }
@@ -104,23 +160,60 @@ details details summary {
     color: #666;
 }
 
-/* Color input styling */
+[data-bs-theme="dark"] details details summary {
+    color: #aaa;
+}
+
 input[type="color"] {
     height: 31px;
     padding: 2px;
 }
 
-/* Global actions area */
 .global-actions .btn {
     margin-bottom: 0.25rem;
 }
 
-/* Checkbox cell centering */
 input.form-check-input {
     cursor: pointer;
 }
 
-/* Selected count badge */
 .selected-count {
     font-size: 0.85rem;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.2s;
+}
+
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* Fix details bg-light in dark mode */
+[data-bs-theme="dark"] .bg-light {
+    background-color: var(--config-bg) !important;
+}
+
+/* Preview modal */
+#preview-name {
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+#prev-btn:disabled, #next-btn:disabled {
+    opacity: 0.3;
 }

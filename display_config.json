@@ -1,0 +1,25 @@
+{
+  "globalConfig": {
+    "fallbackDurationMs": 8000
+  },
+  "categories": {
+    "Mens": {
+      "defaultDurationMs": 9000,
+      "themeTag": "mens",
+      "backgroundTopColor": "#1a1a2e",
+      "backgroundBottomColor": "#16213e"
+    },
+    "Ladies": {
+      "defaultDurationMs": 8000,
+      "themeTag": "ladies",
+      "backgroundTopColor": "#2d1b3d",
+      "backgroundBottomColor": "#1a1a2e"
+    },
+    "Mixed": {
+      "defaultDurationMs": 7000,
+      "themeTag": "mixed",
+      "backgroundTopColor": "#1a1a2e",
+      "backgroundBottomColor": "#0f3460"
+    }
+  }
+}
