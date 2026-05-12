@@ -296,8 +296,13 @@ def render_management_panel(data, available_boards_data, caps, username_input, p
         st.session_state.selected_ids = list(board_configs.keys())
     if "scrape_ids" not in st.session_state:
         st.session_state.scrape_ids = []
-    if "edit_focus" not in st.session_state:
-        st.session_state.edit_focus = None
+    # Auto-detect category for new boards
+    for bid in all_available_ids:
+        bid_str = str(bid)
+        if bid_str not in board_configs:
+            title = boards_map.get(bid, "")
+            cat = "Ladies" if "LADIES" in title.upper() else "Mens"
+            board_configs[bid_str] = {"columns": "1", "fill": "Progressive", "category": cat, "durationMs": None}
 
     stats = []
     for bid in all_available_ids:
@@ -308,6 +313,7 @@ def render_management_panel(data, available_boards_data, caps, username_input, p
         winners_count = len(board_cache.get("winners", [])) if board_cache else 0
         
         config = board_configs.get(bid_str, {})
+        category = config.get("category", "Mens")
         selected_cols = config.get("columns", "1")
         
         if selected_cols == "Best Fit":
@@ -323,12 +329,21 @@ def render_management_panel(data, available_boards_data, caps, username_input, p
         if boards_req == 0:
             boards_req = 1
         
+        cols_display = config.get("columns", "1")
+        if cols_display == "Best Fit":
+            cols_display = "1"
+        fill_display = config.get("fill", "Progressive")
+        dur_display = config.get("durationMs") or 0
+
         stats.append({
             "Scrape": bid_str in st.session_state.scrape_ids,
-            "Edit": st.session_state.edit_focus == bid_str,
             "Gen": bid_str in st.session_state.selected_ids,
             "Board ID": bid,
             "Title": title,
+            "Columns": cols_display,
+            "Fill": fill_display,
+            "Category": category,
+            "DurationMs": dur_display,
             "Winners": winners_count,
             "Boards": boards_req,
             "Status": status
@@ -336,146 +351,126 @@ def render_management_panel(data, available_boards_data, caps, username_input, p
     
     df = pd.DataFrame(stats)
     
-    main_col, side_col = st.columns([2.3, 1], gap="large")
+    # --- Filter Logic ---
+    filter_text = st.text_input("🔍 Filter Boards", value="", placeholder="Search by ID or Title...", help="Type to narrow down the list").lower()
+    
+    if filter_text:
+        display_df = df[
+            df["Board ID"].astype(str).str.contains(filter_text) | 
+            df["Title"].str.lower().str.contains(filter_text)
+        ]
+    else:
+        display_df = df
 
-    with main_col:
-        # Action Row with even button sizes
-        col_scrape, col_gen, col_all, col_none, _ = st.columns([1, 1, 1, 1, 1], vertical_alignment="bottom")
-        
-        if col_all.button("✅ All (Gen)", use_container_width=True, help="Select all boards for generation"):
-            st.session_state.selected_ids = [str(bid) for bid in all_available_ids]
-            # Ensure they have a config
-            for bid in st.session_state.selected_ids:
+    # Selection controls (no data_editor to avoid JS module loading bugs)
+    sel_scrape_key = "sel_scrape_ids"
+    sel_gen_key = "sel_gen_ids"
+
+    if sel_scrape_key not in st.session_state:
+        st.session_state[sel_scrape_key] = list(st.session_state.scrape_ids)
+    if sel_gen_key not in st.session_state:
+        st.session_state[sel_gen_key] = list(st.session_state.selected_ids)
+
+    all_id_strs = [str(b) for b in all_available_ids]
+    all_id_strs_sorted = sorted(all_id_strs, key=lambda x: int(x))
+    board_label = {s: f"{s} - {boards_map.get(int(s), '')}" for s in all_id_strs_sorted}
+
+    col_sel, col_act = st.columns([2, 1], gap="large")
+    with col_sel:
+        st.multiselect("🗳️ Select boards to Scrape", options=all_id_strs_sorted, format_func=lambda x: board_label.get(x, x), key=sel_scrape_key)
+        st.multiselect("🎨 Select boards to Generate", options=all_id_strs_sorted, format_func=lambda x: board_label.get(x, x), key=sel_gen_key)
+
+    with col_act:
+        st.markdown("**Quick actions**")
+        if st.button("☑ All Scrape", use_container_width=True):
+            st.session_state[sel_scrape_key] = all_id_strs_sorted
+        if st.button("☐ Clear Scrape", use_container_width=True):
+            st.session_state[sel_scrape_key] = []
+        if st.button("☑ All Gen", use_container_width=True):
+            st.session_state[sel_gen_key] = all_id_strs_sorted
+            for bid in all_id_strs_sorted:
                 if bid not in board_configs:
-                    board_configs[bid] = {"columns": "1", "fill": "Progressive"}
+                    board_configs[bid] = {"columns": "1", "fill": "Progressive", "category": "Mens", "durationMs": None}
             save_board_configs(board_configs)
+        if st.button("☐ Clear Gen", use_container_width=True):
+            st.session_state[sel_gen_key] = []
 
+    # Sync multiselect state to code-visible session vars
+    st.session_state.scrape_ids = st.session_state.get(sel_scrape_key, [])
+    st.session_state.selected_ids = st.session_state.get(sel_gen_key, [])
 
-        if col_none.button("❌ Clear (Gen)", use_container_width=True, help="Unselect all boards for generation"):
-            st.session_state.selected_ids = []
-
-
-        if col_scrape.button("🔍 Scrape Selected", type="secondary", use_container_width=True, help="Scrapes checked boards"):
-            current_selected = st.session_state.scrape_ids
-            if not current_selected:
-                st.warning("Select boards to scrape first.")
-            elif not username_input or not pin_input:
-                st.error("Provide User ID and PIN in the sidebar.")
-            else:
-                env = os.environ.copy()
-                env["USERNAME"] = username_input
-                env["PIN"] = pin_input
-                with st.spinner(f"⏳ Scraping {len(current_selected)} boards..."):
-                    cmd = [sys.executable, SCRAPER_SCRIPT] + [str(i) for i in current_selected]
-                    process = subprocess.run(cmd, env=env, capture_output=True, text=True)
-                    if process.returncode == 0:
-                        st.success("✅ Scraping complete!")
-                        st.rerun(scope="app") 
-                    else:
-                        st.error("❌ Scraping failed.")
-
-        if col_gen.button("🎨 Generate Selected", type="primary", use_container_width=True):
-            current_selected = st.session_state.selected_ids
-            scraped_selected = [bid for bid in current_selected if any(str(b["board_id"]) == bid for b in data)]
-            if not scraped_selected:
-                st.warning("Select at least one scraped board.")
-            else:
-                final_configs = {}
-                for bid in scraped_selected:
-                    config = board_configs.get(bid, {"columns": "1", "fill": "Progressive"})
-                    cols = config["columns"]
-                    if cols == "Best Fit":
-                        board_cache = next((b for b in data if str(b["board_id"]) == bid), None)
-                        w_count = len(board_cache["winners"]) if board_cache else 0
-                        cols = calculate_best_fit(w_count, caps)
-                    final_configs[bid] = {"columns": cols, "fill": config.get("fill", "Progressive").lower()}
-                trigger_image_generation(scraped_selected, final_configs)
-
-        # --- Filter Logic ---
-        filter_text = st.text_input("🔍 Filter Boards", value="", placeholder="Search by ID or Title...", help="Type to narrow down the list").lower()
-        
-        if filter_text:
-            display_df = df[
-                df["Board ID"].astype(str).str.contains(filter_text) | 
-                df["Title"].str.lower().str.contains(filter_text)
-            ]
+    # Action buttons
+    col_scrape_btn, col_gen_btn = st.columns([1, 1], vertical_alignment="bottom")
+    
+    if col_scrape_btn.button("🔍 Scrape Selected", type="secondary", use_container_width=True, help="Scrapes selected boards"):
+        current_selected = st.session_state.scrape_ids
+        if not current_selected:
+            st.warning("Select boards to scrape first.")
+        elif not username_input or not pin_input:
+            st.error("Provide User ID and PIN in the sidebar.")
         else:
-            display_df = df
+            env = os.environ.copy()
+            env["USERNAME"] = username_input
+            env["PIN"] = pin_input
+            with st.spinner(f"⏳ Scraping {len(current_selected)} boards..."):
+                cmd = [sys.executable, SCRAPER_SCRIPT] + [str(i) for i in current_selected]
+                process = subprocess.run(cmd, env=env, capture_output=True, text=True)
+                if process.returncode == 0:
+                    st.success("✅ Scraping complete!")
+                    st.rerun(scope="app") 
+                else:
+                    st.error("❌ Scraping failed.")
 
-        # Show interactive table
-        edited_df = st.data_editor(
-            display_df,
-            column_config={
-                "Scrape": st.column_config.CheckboxColumn("Scrape", help="Select for scraping", width="small"),
-                "Edit": st.column_config.CheckboxColumn("⚙️", help="Click to configure", width="small"),
-                "Gen": st.column_config.CheckboxColumn("Gen", help="Select for generation", width="small"),
-                "Board ID": st.column_config.NumberColumn(format="%d"),
-                "Boards": st.column_config.NumberColumn("Boards", width="small", help="Number of boards required based on template and winners"),
-                "Status": st.column_config.TextColumn("Status"),
-            },
-            disabled=["Board ID", "Winners", "Status", "Boards"],
-            hide_index=True,
-            key="board_selector",
-            use_container_width=True
-        )
+    if col_gen_btn.button("🎨 Generate Selected", type="primary", use_container_width=True):
+        current_selected = st.session_state.selected_ids
+        scraped_selected = [bid for bid in current_selected if any(str(b["board_id"]) == bid for b in data)]
+        if not scraped_selected:
+            st.warning("Select at least one scraped board.")
+        else:
+            final_configs = {}
+            for bid in scraped_selected:
+                config = board_configs.get(bid, {"columns": "1", "fill": "Progressive"})
+                cols = config["columns"]
+                if cols == "Best Fit":
+                    board_cache = next((b for b in data if str(b["board_id"]) == bid), None)
+                    w_count = len(board_cache["winners"]) if board_cache else 0
+                    cols = calculate_best_fit(w_count, caps)
+                final_configs[bid] = {"columns": cols, "fill": config.get("fill", "Progressive").lower()}
+            trigger_image_generation(scraped_selected, final_configs)
 
-    # RIGHT COLUMN: Configuration Pane
-    with side_col:
-        focused_bid = None
-        for _, row in edited_df.iterrows():
-            if row["Edit"]:
-                focused_bid = str(row["Board ID"])
-                st.session_state.edit_focus = focused_bid
-                break
-        
-        if not focused_bid:
-             st.session_state.edit_focus = None
+    # Read-only table
+    st.dataframe(
+        display_df,
+        column_order=["Board ID", "Title", "Columns", "Fill", "Category", "DurationMs", "Winners", "Boards", "Status"],
+        hide_index=True,
+        use_container_width=True
+    )
 
-        if st.session_state.edit_focus:
-            bid = st.session_state.edit_focus
-            board_cache = next((b for b in data if str(b["board_id"]) == bid), None)
-            config = board_configs.get(bid, {"columns": "1", "fill": "Progressive"})
-            
-            st.markdown(f"### ⚙️ Board Settings: {bid}")
-            title_input = st.text_input("Board Title", value=board_cache.get("title", f"Board {bid}") if board_cache else boards_map.get(int(bid)), key=f"title_{bid}")
-            
-            w_count = len(board_cache["winners"]) if board_cache else 0
-            st.info(f"**Winners:** {w_count}  \n**Recommended Layout:** Multiple single column boards")
-            
-            current_fmt = str(config.get("columns", "1"))
-            if current_fmt == "Best Fit":
-                current_fmt = "1"
-            new_fmt = st.selectbox("Columns", options=["1", "2", "3", "4"], index=["1", "2", "3", "4"].index(current_fmt), key=f"fmt_{bid}")
-            new_fill = st.selectbox("Fill Method", options=["Progressive", "Balanced"], index=["Progressive", "Balanced"].index(config.get("fill", "Progressive")), key=f"fill_{bid}")
-            new_category = st.selectbox("Category", options=["Mens", "Ladies", "Mixed"], index=["Mens", "Ladies", "Mixed"].index(config.get("category", "Mens")), key=f"cat_{bid}")
-            current_duration = config.get("durationMs")
-            new_duration = st.number_input("Display Duration (ms)", value=int(current_duration) if current_duration else 0, min_value=0, step=1000, key=f"dur_{bid}", help="Override per-board display duration. 0 = use category default.")
-            
-            if new_fmt != str(config.get("columns")) or new_fill != config.get("fill") or (board_cache and title_input != board_cache["title"]) or new_category != config.get("category", "Mens") or new_duration != (config.get("durationMs") or 0):
-                board_configs[bid] = {"columns": new_fmt, "fill": new_fill, "category": new_category, "durationMs": new_duration if new_duration > 0 else None}
+    # Board configuration panel below the table
+    with st.expander("⚙️ Board Configuration", expanded=False):
+        board_ids_sorted = sorted(all_available_ids, key=lambda x: str(x))
+        bid_opts = {str(b): f"{b} - {boards_map.get(b, '')}" for b in board_ids_sorted}
+        selected_cfg_bid = st.selectbox("Select board to configure", options=list(bid_opts.keys()), format_func=lambda x: bid_opts[x], key="cfg_board_sel")
+
+        if selected_cfg_bid:
+            cfg = board_configs.get(selected_cfg_bid, {})
+            cfg_cols = st.selectbox("Columns", options=["1", "2", "3", "4"], index=["1", "2", "3", "4"].index(cfg.get("columns", "1")), key="cfg_cols")
+            cfg_fill = st.selectbox("Fill Method", options=["Progressive", "Balanced"], index=0 if cfg.get("fill", "Progressive") == "Progressive" else 1, key="cfg_fill")
+            cfg_cat = st.selectbox("Category", options=["Mens", "Ladies", "Mixed"], index=["Mens", "Ladies", "Mixed"].index(cfg.get("category", "Mens")), key="cfg_cat")
+            cfg_dur = st.number_input("Display Duration (ms)", value=cfg.get("durationMs") or 0, min_value=0, step=1000, key="cfg_dur")
+
+            if st.button("Save Configuration", type="primary", use_container_width=True):
+                board_configs[selected_cfg_bid] = {
+                    "columns": cfg_cols,
+                    "fill": cfg_fill,
+                    "category": cfg_cat,
+                    "durationMs": cfg_dur if cfg_dur > 0 else None
+                }
                 save_board_configs(board_configs)
-                if board_cache and title_input != board_cache["title"]:
-                    board_cache["title"] = title_input
-                    with open(CACHE_FILE, "w") as f:
-                        json.dump(data, f, indent=2)
-                st.rerun(scope="fragment") 
-        else:
-            st.markdown("### ⚙️ Board Settings")
-            st.info("👈 Click the gear icon (**⚙️**) in the table to configure a board.")
- 
-    # Update selection logic (merging filtered edits with full session state)
-    visible_ids = display_df["Board ID"].astype(str).tolist()
-    current_gen_visible = edited_df[edited_df["Gen"]]["Board ID"].astype(str).tolist()
-    current_scrape_visible = edited_df[edited_df["Scrape"]]["Board ID"].astype(str).tolist()
+                st.success(f"✅ Board {selected_cfg_bid} configuration saved!")
+                st.rerun(scope="fragment")
 
-    new_gen = [bid for bid in st.session_state.selected_ids if bid not in visible_ids] + current_gen_visible
-    new_scrape = [bid for bid in st.session_state.scrape_ids if bid not in visible_ids] + current_scrape_visible
-
-    if set(new_gen) != set(st.session_state.selected_ids) or set(new_scrape) != set(st.session_state.scrape_ids):
-        st.session_state.selected_ids = new_gen
-        st.session_state.scrape_ids = new_scrape
-
-    # --- Global Actions moved inside fragment for instant updates ---
+    # --- Global Actions ---
     st.markdown("---")
     st.subheader("⚙️ Global Actions")
     st.write(f"You have **{len(st.session_state.get('selected_ids', []))}** boards currently selected in the table.")
