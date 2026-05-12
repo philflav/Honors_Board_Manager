@@ -1,0 +1,126 @@
+/* FFGC Honors Board Manager — custom styles */
+
+body {
+    background-color: #f8f9fa;
+}
+
+/* Sidebar styling */
+.sidebar-section {
+    background: #fff;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.sidebar-section h5 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+/* Table improvements */
+.table {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.table th {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Board config details summary */
+details summary {
+    cursor: pointer;
+    user-select: none;
+}
+
+details summary:focus {
+    outline: none;
+}
+
+/* Alert styling */
+.alert {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Badge sizing */
+.badge {
+    font-size: 0.75rem;
+}
+
+/* Button spacing */
+.btn-group-spaced .btn {
+    margin-right: 0.25rem;
+}
+
+/* Make the filter input stand out */
+#filter-input {
+    border-color: #dee2e6;
+}
+
+#filter-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.15);
+}
+
+/* Responsive table wrapper */
+.table-responsive {
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+/* Table row hover highlight */
+.table-hover tbody tr:hover {
+    background-color: rgba(13,110,253,0.04);
+}
+
+/* Config panel */
+.config-panel {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+/* Quick action buttons row */
+.quick-actions .btn {
+    font-size: 0.8rem;
+}
+
+/* Carousel settings nested details */
+details details {
+    margin-top: 0.5rem;
+}
+
+details details summary {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Color input styling */
+input[type="color"] {
+    height: 31px;
+    padding: 2px;
+}
+
+/* Global actions area */
+.global-actions .btn {
+    margin-bottom: 0.25rem;
+}
+
+/* Checkbox cell centering */
+input.form-check-input {
+    cursor: pointer;
+}
+
+/* Selected count badge */
+.selected-count {
+    font-size: 0.85rem;
+}

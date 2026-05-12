@@ -32,11 +32,8 @@ COPY . .
 # Ensure the automated_images directory exists
 RUN mkdir -p automated_images
 
-# Expose the default Streamlit port
-EXPOSE 8501
+# Expose the Flask port
+EXPOSE 5000
 
-# Command to run the Streamlit app
-# --server.address 0.0.0.0 is critical for Docker reachability
-# --server.port 8501 ensures it matches the EXPOSE and Render config
-# --server.enableCORS=false and --server.enableXsrfProtection=false resolve static asset loading issues on Render
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.enableCORS=false", "--server.enableXsrfProtection=false"]
+# Command to run the Flask app with Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "300", "app:app"]

@@ -3,7 +3,7 @@ services:
     build: .
     container_name: honors-board-manager
     ports:
-      - "8501:8501"
+      - "5000:5000"
     env_file:
       - .env
     volumes:

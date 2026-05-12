@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    {# ======================================================================
+       SIDEBAR
+    #}
+    <div class="col-md-3 col-xl-2 mb-4">
+        {# --- Exit & Cleanup --- #}
+        <form action="{{ url_for('index') }}" method="get" class="mb-2">
+            <button class="btn btn-outline-danger w-100" type="submit"
+                    onclick="if(!confirm('Delete all generated images?'))return false">🚪 Exit &amp; Cleanup</button>
+        </form>
+        <hr>
+
+        {# --- Credentials --- #}
+        <h5>🔐 Credentials</h5>
+        <form action="{{ url_for('test_login') }}" method="post">
+            <div class="row g-2 mb-2">
+                <div class="col-6">
+                    <input class="form-control form-control-sm" name="username" placeholder="User ID"
+                           value="{{ username }}" required>
+                </div>
+                <div class="col-6">
+                    <input class="form-control form-control-sm" name="pin" type="password" placeholder="PIN"
+                           value="{{ pin }}" required>
+                </div>
+            </div>
+            <div class="d-grid gap-2 mb-1">
+                <button class="btn btn-primary btn-sm" type="submit">🔑 Test Login</button>
+            </div>
+        </form>
+        <form action="{{ url_for('logout') }}" method="post" class="d-grid mb-2">
+            <button class="btn btn-outline-secondary btn-sm" type="submit">🚪 Logout</button>
+        </form>
+
+        {% if ig_logged_in is true %}
+            <span class="badge bg-success w-100 mb-2">🟢 Logged in as {{ username }}</span>
+        {% elif ig_logged_in is false %}
+            <span class="badge bg-danger w-100 mb-2">🔴 Invalid credentials</span>
+        {% else %}
+            <span class="badge bg-secondary w-100 mb-2">⚪ Not tested</span>
+        {% endif %}
+        <hr>
+
+        {# --- Carousel Settings --- #}
+        <h5>📺 Carousel Settings</h5>
+        <form action="{{ url_for('save_display_config') }}" method="post">
+            <div class="mb-2">
+                <label class="form-label small">Global fallback (ms)</label>
+                <input class="form-control form-control-sm" name="global_fallback" type="number"
+                       value="{{ display_config.get('globalConfig', {}).get('fallbackDurationMs', 8000) }}"
+                       min="1000" step="1000">
+            </div>
+
+            <details class="mb-3">
+                <summary class="small fw-bold">Per-category defaults</summary>
+                {% for cat in ['Mens', 'Ladies', 'Mixed'] %}
+                    {% set cc = display_config.get('categories', {}).get(cat, {}) %}
+                    <div class="border rounded p-2 mb-2 bg-light">
+                        <strong class="small">{{ cat }}</strong>
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <label class="small">Duration (ms)</label>
+                                <input class="form-control form-control-sm" name="cat_dur_{{ cat }}" type="number"
+                                       value="{{ cc.get('defaultDurationMs', 8000) }}" min="1000" step="1000">
+                            </div>
+                            <div class="col-6">
+                                <label class="small">Theme tag</label>
+                                <input class="form-control form-control-sm" name="cat_tag_{{ cat }}"
+                                       value="{{ cc.get('themeTag', cat|lower) }}">
+                            </div>
+                        </div>
+                        <div class="row g-1 mt-1">
+                            <div class="col-6">
+                                <label class="small">Top colour</label>
+                                <input class="form-control form-control-sm" name="cat_top_{{ cat }}"
+                                       value="{{ cc.get('backgroundTopColor', '#1a1a2e') }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="small">Bottom colour</label>
+                                <input class="form-control form-control-sm" name="cat_bot_{{ cat }}"
+                                       value="{{ cc.get('backgroundBottomColor', '#16213e') }}">
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </details>
+            <div class="d-grid">
+                <button class="btn btn-outline-primary btn-sm" type="submit">💾 Save Display Settings</button>
+            </div>
+        </form>
+        <hr>
+
+        {# --- Refresh Boards --- #}
+        <form action="{{ url_for('refresh_boards') }}" method="post" class="d-grid mb-2">
+            <button class="btn btn-outline-info btn-sm" type="submit">🔄 Refresh Available Boards</button>
+        </form>
+    </div>
+
+    {# ======================================================================
+       MAIN
+    #}
+    <div class="col-md-9 col-xl-10">
+        {# Action buttons #}
+        <form id="main-form" action="{{ url_for('generate') }}" method="post">
+            <div class="row mb-2">
+                <div class="col-6">
+                    <button class="btn btn-secondary w-100" type="submit"
+                            formaction="{{ url_for('scrape') }}">🔍 Scrape Selected</button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-primary w-100" type="submit">🎨 Generate Selected</button>
+                </div>
+            </div>
+
+        {# Selection quick-actions #}
+        <div class="row mb-3 g-1">
+            <div class="col-3">
+                <button class="btn btn-outline-success btn-sm w-100" type="submit"
+                        formaction="{{ url_for('select_all_scrape') }}">☑ All Scrape</button>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-outline-secondary btn-sm w-100" type="submit"
+                        formaction="{{ url_for('clear_scrape') }}">☐ Clear Scrape</button>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-outline-success btn-sm w-100" type="submit"
+                        formaction="{{ url_for('select_all_gen') }}">☑ All Gen</button>
+            </div>
+            <div class="col-3">
+                <button class="btn btn-outline-secondary btn-sm w-100" type="submit"
+                        formaction="{{ url_for('clear_gen') }}">☐ Clear Gen</button>
+            </div>
+        </div>
+
+        {# Filter #}
+        <input class="form-control mb-2" id="filter-input" type="text" placeholder="🔍 Filter by ID or Title..."
+               oninput="filterTable()">
+
+        {# Table #}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-bordered" id="board-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center" style="width:60px">Scrape</th>
+                        <th class="text-center" style="width:60px">Gen</th>
+                        <th style="width:60px">ID</th>
+                        <th>Title</th>
+                        <th style="width:50px">Cols</th>
+                        <th style="width:80px">Fill</th>
+                        <th style="width:80px">Cat</th>
+                        <th style="width:70px">Dur(ms)</th>
+                        <th style="width:60px">Wins</th>
+                        <th style="width:50px">Brds</th>
+                        <th style="width:80px">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr class="board-row" data-id="{{ r.id }}" data-title="{{ r.title|lower }}">
+                        <td class="text-center">
+                            <input class="form-check-input" type="checkbox" name="scrape_ids" value="{{ r.id }}"
+                                   {% if r.id|string in scrape_ids %}checked{% endif %}>
+                        </td>
+                        <td class="text-center">
+                            <input class="form-check-input" type="checkbox" name="gen_ids" value="{{ r.id }}"
+                                   {% if r.id|string in selected_ids %}checked{% endif %}>
+                        </td>
+                        <td>{{ r.id }}</td>
+                        <td>{{ r.title }}</td>
+                        <td>{{ r.columns }}</td>
+                        <td>{{ r.fill }}</td>
+                        <td>{{ r.category }}</td>
+                        <td>{{ r.duration_ms }}</td>
+                        <td>{{ r.winners }}</td>
+                        <td>{{ r.boards }}</td>
+                        <td>{{ r.scraped }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        </form>{# end main-form #}
+
+        {# --- Board Configuration --- #}
+        <details class="mb-3">
+            <summary class="fw-bold">⚙️ Board Configuration</summary>
+            <div class="border rounded p-3 mt-2 bg-light">
+                <form action="{{ url_for('save_config') }}" method="post" class="row g-3 align-items-end">
+                    <div class="col-3">
+                        <label class="form-label small">Select board</label>
+                        <select class="form-select form-select-sm" name="board_id" id="cfg-board-select"
+                                onchange="loadBoardConfig(this)">
+                            <option value="">— choose —</option>
+                            {% for r in rows %}
+                            <option value="{{ r.id }}"
+                                    data-cols="{{ r.columns }}"
+                                    data-fill="{{ r.fill }}"
+                                    data-cat="{{ r.category }}"
+                                    data-dur="{{ r.duration_ms }}">
+                                {{ r.id }} - {{ r.title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-2">
+                        <label class="form-label small">Columns</label>
+                        <select class="form-select form-select-sm" name="columns" id="cfg-cols">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="col-2">
+                        <label class="form-label small">Fill</label>
+                        <select class="form-select form-select-sm" name="fill" id="cfg-fill">
+                            <option value="Progressive">Progressive</option>
+                            <option value="Balanced">Balanced</option>
+                        </select>
+                    </div>
+                    <div class="col-2">
+                        <label class="form-label small">Category</label>
+                        <select class="form-select form-select-sm" name="category" id="cfg-cat">
+                            <option value="Mens">Mens</option>
+                            <option value="Ladies">Ladies</option>
+                            <option value="Mixed">Mixed</option>
+                        </select>
+                    </div>
+                    <div class="col-2">
+                        <label class="form-label small">Duration (ms)</label>
+                        <input class="form-control form-control-sm" type="number" name="duration_ms" id="cfg-dur"
+                               min="0" step="1000" value="0">
+                    </div>
+                    <div class="col-1">
+                        <button class="btn btn-primary btn-sm w-100" type="submit">💾</button>
+                    </div>
+                </form>
+            </div>
+        </details>
+
+        {# --- Global Actions --- #}
+        <hr>
+        <h5>⚙️ Global Actions</h5>
+
+        <form action="{{ url_for('scrape') }}" method="post" class="d-inline">
+            {% for sid in selected_ids %}
+            <input type="hidden" name="scrape_ids" value="{{ sid }}">
+            {% endfor %}
+            <button class="btn btn-primary" type="submit">🔥 Scrape &amp; Generate ALL Selected</button>
+        </form>
+
+        <form action="{{ url_for('export_usb') }}" method="post" class="d-inline">
+            {% for sid in selected_ids %}
+            <input type="hidden" name="gen_ids" value="{{ sid }}">
+            {% endfor %}
+            <button class="btn btn-secondary" type="submit">💾 Export for USB</button>
+        </form>
+
+        <a href="{{ url_for('download_zip') }}" class="btn btn-outline-primary">📦 Download Images ZIP</a>
+        <a href="{{ url_for('download_carousel') }}" class="btn btn-outline-secondary">📦 Download Carousel ZIP</a>
+        <p class="text-muted small mt-1">You have <strong>{{ selected_ids|length }}</strong> boards currently selected.</p>
+
+    </div>{# end main col #}
+</div>{# end row #}
+
+{# ========================================================================
+   JavaScript
+#}
+<script>
+// Table filter
+function filterTable() {
+    const q = document.getElementById('filter-input').value.toLowerCase();
+    document.querySelectorAll('.board-row').forEach(row => {
+        const id = row.dataset.id;
+        const title = row.dataset.title;
+        row.style.display = (!q || id.includes(q) || title.includes(q)) ? '' : 'none';
+    });
+}
+
+// Load board config into the config form
+function loadBoardConfig(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+    document.getElementById('cfg-cols').value = opt.dataset.cols || '1';
+    document.getElementById('cfg-fill').value = opt.dataset.fill || 'Progressive';
+    document.getElementById('cfg-cat').value = opt.dataset.cat || 'Mens';
+    document.getElementById('cfg-dur').value = opt.dataset.dur || '0';
+}
+</script>
+{% endblock %}
