@@ -2,6 +2,9 @@
   "1": {
     "background_image": "1column.png",
     "board_name_font_size": 35,
+    "tag_center_x": 512,
+    "tag_centre_y": 50,
+    "tag_font_size":25,
     "board_name_start_y": 286,
     "max_title_width": 750,
     "font_size_list": 22,
@@ -16,6 +19,9 @@
   "2": {
     "background_image": "2column.png",
     "board_name_font_size": 35,
+    "tag_center_x": 512,
+    "tag_centre_y": 50,
+    "tag_font_size":25,
     "board_name_start_y": 282,
     "max_title_width": 750,
     "font_size_list": 22,
