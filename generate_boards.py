@@ -174,9 +174,11 @@ def automate_boards(global_columns, limit_ids=None, per_board_config=None):
         if per_board_config and board_id_str in per_board_config:
             columns = int(per_board_config[board_id_str].get("columns", global_columns))
             fill_method = per_board_config[board_id_str].get("fill", "progressive").lower()
+            category = per_board_config[board_id_str].get("category", "Mens")
         else:
             columns = global_columns
             fill_method = "progressive"
+            category = "Mens"
             
         config = load_config(columns)
         bg_path = os.path.join("Board_background_images", config["background_image"])
@@ -216,6 +218,16 @@ def automate_boards(global_columns, limit_ids=None, per_board_config=None):
             title_font_size = 30 if len(board_name) > 18 else config["board_name_font_size"]
             draw_centered_titled(draw, board_name, config["board_name_start_y"], image_width, 
                                  config["max_title_width"], title_font_size, gold_color)
+
+            # Draw category tag centered on tag_center_x / tag_centre_y if configured
+            if config.get("tag_center_x") is not None:
+                tag_font = load_font(config["tag_font_size"])
+                bbox = draw.textbbox((0, 0), category, font=tag_font)
+                tw = bbox[2] - bbox[0]
+                th = bbox[3] - bbox[1]
+                tx = config["tag_center_x"] - tw // 2
+                ty = config["tag_centre_y"] - th // 2
+                draw_embossed_text(draw, (tx, ty), category.upper(), tag_font, gold_color)
 
             # Split winners based on method
             if fill_method == "balanced":

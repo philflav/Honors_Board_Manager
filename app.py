@@ -380,7 +380,7 @@ def generate():
             board_cache = next((b for b in cache_data if str(b["board_id"]) == bid), None)
             wc = len(board_cache["winners"]) if board_cache else 0
             cols = calculate_best_fit(wc, caps)
-        final_configs[bid] = {"columns": str(cols), "fill": config.get("fill", "Progressive").lower()}
+        final_configs[bid] = {"columns": str(cols), "fill": config.get("fill", "Progressive").lower(), "category": config.get("category", "Mens")}
 
     cleanup_images()
     clean_cache_titles()
@@ -429,7 +429,7 @@ def export_usb():
             board_cache = next((b for b in cache_data if str(b["board_id"]) == bid), None)
             wc = len(board_cache["winners"]) if board_cache else 0
             cols = calculate_best_fit(wc, caps)
-        final_configs[bid] = {"columns": str(cols), "fill": config.get("fill", "Progressive").lower()}
+        final_configs[bid] = {"columns": str(cols), "fill": config.get("fill", "Progressive").lower(), "category": config.get("category", "Mens")}
 
     cleanup_images()
     clean_cache_titles()
