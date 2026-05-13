@@ -46,12 +46,34 @@ class IntelligentGolfScraper:
         
         # Click login button
         self.page.get_by_role("button", name="Login").click()
-        # Wait for navigation or error message
-        self.page.wait_for_timeout(2000) 
         
-        if self.page.get_by_text("Invalid login").is_visible():
-            print("ERROR: Invalid login credentials provided.")
-            return False
+        # Wait for page to settle — either navigation (success) or error message (failure)
+        self.page.wait_for_load_state("networkidle", timeout=10000)
+        
+        # Check for login errors
+        error_selectors = [
+            self.page.get_by_text("Invalid login"),
+            self.page.locator(".alert-error"),
+            self.page.locator(".error"),
+            self.page.locator('[class*="error"]'),
+        ]
+        
+        for selector in error_selectors:
+            try:
+                if selector.is_visible(timeout=2000):
+                    print("ERROR: Invalid login credentials provided.")
+                    return False
+            except:
+                continue
+        
+        # If still on the login page with the form visible, assume failure
+        try:
+            login_btn = self.page.get_by_role("button", name="Login")
+            if login_btn.is_visible(timeout=1000):
+                print("ERROR: Login failed — still on login page.")
+                return False
+        except:
+            pass
             
         print("Logged in successfully!")
         return True
@@ -571,6 +593,15 @@ class IntelligentGolfScraper:
             print(f"Failed to load cache: {e}")
             return None
     
+    def logout(self):
+        """Log out of the Intelligent Golf portal"""
+        try:
+            self.page.goto(f"{self.club_url.rstrip('/')}/login.php?action=logout", wait_until="domcontentloaded")
+            self.page.wait_for_timeout(1000)
+            print("Logged out of Intelligent Golf.")
+        except Exception as e:
+            print(f"Logout note: {e}")
+
     def run_honors_boards(self, board_ids, force_refresh=False, cache_file="honors_boards_cache.json"):
         """Run honors board scraping with caching"""
         if not force_refresh:
@@ -592,6 +623,7 @@ class IntelligentGolfScraper:
                 return boards_data
                 
             finally:
+                self.logout()
                 self.browser.close()
 
     def run_discovery(self, cache_file="available_boards.json"):
@@ -614,6 +646,7 @@ class IntelligentGolfScraper:
                 return boards
                 
             finally:
+                self.logout()
                 self.browser.close()
     
     def run(self, competition_id=None, export_files=False, force_refresh=False):
@@ -728,6 +761,7 @@ class IntelligentGolfScraper:
                             print(f"Winner: {winner['player']} - {winner['points']} points")
                 
             finally:
+                self.logout()
                 self.browser.close()
 
 # Example usage

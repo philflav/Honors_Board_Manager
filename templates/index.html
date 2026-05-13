@@ -14,7 +14,7 @@
         <hr>
 
         {# --- Credentials --- #}
-        <h5>🔐 Credentials</h5>
+        <h5>🔐 IG Credentials</h5>
         <form action="{{ url_for('test_login') }}" method="post">
             <div class="row g-2 mb-2">
                 <div class="col-6">
@@ -27,11 +27,13 @@
                 </div>
             </div>
             <div class="d-grid gap-2 mb-1">
-                <button class="btn btn-primary btn-sm" type="submit">🔑 Test Login</button>
+                <button class="btn btn-primary btn-sm" type="submit"
+                        {% if ig_logged_in is true %}disabled{% endif %}>🔑 Login</button>
             </div>
         </form>
         <form action="{{ url_for('logout') }}" method="post" class="d-grid mb-2">
-            <button class="btn btn-outline-secondary btn-sm" type="submit">🚪 Logout</button>
+            <button class="btn btn-outline-secondary btn-sm" type="submit"
+                    {% if ig_logged_in is not true %}disabled{% endif %}>🚪 Logout</button>
         </form>
 
         {% if ig_logged_in is true %}
@@ -39,7 +41,7 @@
         {% elif ig_logged_in is false %}
             <span class="badge bg-danger w-100 mb-2">🔴 Invalid credentials</span>
         {% else %}
-            <span class="badge bg-secondary w-100 mb-2">⚪ Not tested</span>
+            <span class="badge bg-warning text-dark w-100 mb-2">🟠 Not logged in</span>
         {% endif %}
         <hr>
 
